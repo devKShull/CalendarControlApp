@@ -1,6 +1,5 @@
-import { View } from 'native-base';
 import React from 'react'
-import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet, View, Linking } from 'react-native';
 import { openInbox, openComposer } from 'react-native-email-link';
 
 const emailApi = () => {
