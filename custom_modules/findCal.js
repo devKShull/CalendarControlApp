@@ -20,14 +20,16 @@ const findCal = ({ navigaitor }) => {
     //             </TouchableOpacity>)
     //     })
     // })
-    const [data, setData] = useState()
-    const [data2, setData2] = useState()
+    const [data, setData] = useState();
+    const [data2, setData2] = useState();
+    const [data3, setData3] = useState();
     //const [googleCalData, setGoogleCalData] = useState()
     let googleCalData;
     // googleCalData.push(<Text key={'gD'}>Googl calendar Sources</Text>);
     // const [localCalData, setLocalCalData] = useState();
     let localCalData;
     // LocalCalData.push(<Text key={'lD'}>Local Calendar Source</Text>);
+    let samCalData;
 
     useEffect(() => {
         //RNCalendarEvents.findCalendars().then(calendars);
@@ -52,18 +54,18 @@ const findCal = ({ navigaitor }) => {
             calendars.filter((i) => {
                 return (i.type === ('com.google'))
             })
-
-
         localCalData =
             calendars.filter((i) => {
                 return i.type === ('LOCAL')
-            }
-            )
+            })
+        samCalData = calendars.filter((i) => {
+            return i.type === ('com.osp.app.signin')
+        })
 
 
         console.log(googleCalData);
         console.log(localCalData);
-        //
+
         setDatas();
     }
 
@@ -104,6 +106,17 @@ const findCal = ({ navigaitor }) => {
         )
         setData2(
             localCalData.map((i, key) => {
+                return (
+                    <View key={key}>
+                        <TouchableOpacity onPress={() => { remove(i.id, key, i.title) }}>
+                            <Text>{i.title}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            })
+        )
+        setData3(
+            samCalData.map((i, key) => {
                 return (
                     <View key={key}>
                         <TouchableOpacity onPress={() => { remove(i.id, key, i.title) }}>
@@ -156,7 +169,6 @@ const findCal = ({ navigaitor }) => {
         console.log(localCalData)
         setDatas();
         showToast(title);
-        // console.log(calendars);
 
     }
     const Active = () => {
@@ -169,6 +181,8 @@ const findCal = ({ navigaitor }) => {
                 {data}
                 <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Local Calendars</Text>
                 {data2}
+                <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Samsung Calendars</Text>
+                {data3}
             </View>
 
 
@@ -178,7 +192,7 @@ const findCal = ({ navigaitor }) => {
 
     return (
         <View style={{ margin: 15, }}>
-            {/* <TouchableOpacity onPress={() => { console.log(data.type) }}><Text>touch</Text></TouchableOpacity> */}
+
 
             <Active />
             <Text style={{ textAlign: 'right' }}>터치시 캘린더가 삭제됩니다</Text>
@@ -191,6 +205,4 @@ const findCal = ({ navigaitor }) => {
     )
 }
 
-// const vl = [];
-// vl.push(<View></View>);
 export default findCal;

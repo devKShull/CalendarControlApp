@@ -1,13 +1,13 @@
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, Button, StyleSheet, Keyboard } from "react-native";
 import RNCalendarEvents from "react-native-calendar-events";
 import React, { useRef } from "react";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
-import DropDownPicker from "react-native-dropdown-picker";
 import Toast from 'react-native-easy-toast';
 
 
 export default createCal = ({ navigation }) => {
     let calInfO = {
+
         title: 'testCalendar',
         source: {
             name: "calendar control sample App",
@@ -22,16 +22,22 @@ export default createCal = ({ navigation }) => {
         ownerAccount: 'LOCAL',
     }
     const submitSave = async () => {
+
         console.log("setSave");
         const id = await RNCalendarEvents.saveCalendar(calInfO);
-        console.log(id);
+        // console.log(id);
+        Keyboard.dismiss();
+        showToast(id);
+        setTimeout(() => {
+            navigation.goBack();
+        }, 1500);
 
-        navigation.goBack(calInfO.title, id);
-        showToast();
+
+
     }
     const toastRef = useRef();
-    const showToast = () => {
-        toastRef.current.show(calInfO.title + '캘린더가 생성되었습니다. id:' + id, 2000);
+    const showToast = (id) => {
+        toastRef.current.show(calInfO.title + '캘린더가 생성되었습니다. id: ' + id, 2000);
     }
 
     return (
@@ -44,30 +50,8 @@ export default createCal = ({ navigation }) => {
                 <Text style={{ flex: 1, }}>Calendar Name</Text>
                 <TextInput placeholder="testCalName" style={{ flex: 2, }} onChangeText={(text) => calInfO.name} />
             </View>
-            <View style={Styles.RowView}>
-                <Text style={{ flex: 0.5 }}>Type</Text>
 
-                <DropDownPicker
-                    style={{ width: 150 }}
-                    containerStyle={{ flex: 1 }}
-                    itemStyle={{
-                        justifyContent: 'flex-start',
-                        backgroundColor: 'pink',
-                    }}
-                    dropDownMaxHeight={200}
-                    placeholder="choose"
-                    items={[
-                        { label: 'Local', value: 'LOCAL' },
-                        { label: 'gmail.com', value: 'com.google' }
-                    ]}
-                    value={null}
-                    onChangeItem={(item) => { calInfO.source.type = item }}
-                    multiple={true}
-
-                />
-
-            </View>
-            <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => { submitSave() }}><Text style={{ fontSize: 20 }}>Submit</Text></TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => { submitSave() }}><Text style={{ fontSize: 20 }}>저장</Text></TouchableOpacity>
             <Toast ref={toastRef}
                 positionValue={200}
                 fadeInDuration={200}

@@ -1,12 +1,28 @@
-import { View, Text, Button, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, Button, StyleSheet, Keyboard } from 'react-native'
+import React, { useState, useRef, useEffect } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
+import RNCalendarEvents from 'react-native-calendar-events';
+import Toast from 'react-native-easy-toast';
+import { createStackNavigator } from '@react-navigation/stack'
+import { NavigationContainer } from '@react-navigation/native'
 
-export default eventSave = () => {
 
+
+const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
+    const [eventData, setEventData] = useState({
+        calendarId: null,       //저장될 캘린더 ID
+        //notes: 'test Notes',    //메모
+        startDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z', //시작시간
+        endDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
+        allDay: false,
+        description: 'test Description',
+        recurrence: 'none' //반복
+    })
+    let calId = { id: null, title: null };
+    // const [calId, setCalId] = useState()
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
     const [isStart, setIsStart] = useState(false);
@@ -17,48 +33,51 @@ export default eventSave = () => {
     //     setDate(currentDate);
     // }
     const [eventTitle, setTitle] = useState();
-    const [eventData, setEventData] = useState({
-        calendarId: '14',
-        notes: 'test Notes',
-        startDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',
-        endDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',
-        allDay: true,
-        description: 'test Description',
-    })
-    // let eventData = {
-    //     calendarId: '14',
-    //     notes: 'test Notes',
-    //     startDate: '2021-09-18T19:26:00.000Z',
-    //     endDate: '2021-09-19T19:26:00.000Z',
-    //     allDay: true,
-    //     description: 'test Description',
-    // }
+    const [calNameShow, setCalNameShow] = useState()
+    useEffect(() => {
+        // console.log(route.params);
+        calId = route.params;
 
+        if (calId != null) {
+            setEventData({ ...eventData, ["calendarId"]: calId.id })
+            if (calId.title != null) {
+                // console.log(calId.title);
+                setCalNameShow(<Text style={{ textAlign: 'right', flex: 1 }}>{calId.title} 선택됨</Text>)
+                showToast(calId.title + "캘린더가 선택되었습니다.")
+            }
+        }
+
+        return () => {
+        }
+    }, [route.params])
 
     const onChange = (event, selectedDate) => {
         const currentDate = selectedDate || date;
         //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-        console.log(currentDate);
-        console.log(date);
-        console.log(selectedDate);
+        // console.log(currentDate);
+        // console.log(date);
+        // console.log(selectedDate);
 
-        setShow(Platform.OS === 'ios');
+        setShow(false);
         setDate(currentDate);
         if (mode === 'date') {
             showMode('time');
 
-            console.log(mode);
+            // console.log(mode);
         } else {
-            console.log(isStart);
+            // console.log(isStart);
             //YYYY-MM-DDThh:mm:ss.SSSZ
             const forDate = moment(currentDate).format('YYYY-MM-DDThh:mm:ss.SSS');
+
             isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
-            console.log("date")
-            console.log(date)
-            console.log("--------------------")
-            console.log(eventData.startDate)
-            console.log("-------------------")
-            console.log(eventData.endDate)
+            console.log('evttime');
+            console.log(eventData.startDate);
+            // console.log("date")
+            // console.log(date)
+            // console.log("--------------------")
+            // console.log(eventData.startDate)
+            // console.log("-------------------")
+            // console.log(eventData.endDate)
         }
     };
 
@@ -72,55 +91,204 @@ export default eventSave = () => {
         setIsStart(isStart)
         showMode('date');
     };
+    const onSaveEventHandle = async () => {
+        if (eventTitle == null) {
+            showToast('제목을 입력하세요!');
+        } else if (calId.title == null) {
+            showToast('캘린더를 선택하세요');
+        }
+        else {
+            const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
+            // console.log(id);
+            showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+            Keyboard.dismiss
+            setTimeout(() => {
+                navigation.navigate('Calendar Test');
+            }, 1500);
+        }
+
+    }
+
+    const toastRef = useRef();
+    const showToast = (txt) => {
+        toastRef.current.show(txt, 2000);
+    }
 
 
 
 
     return (
-        <View style={{ backgroundColor: '#98CA32' }}>
-            <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 10 }}>
-                <View style={styles.rowStyle}>
-                    <Text>Event Title</Text>
-                    <TextInput placeholder={"title"} style={{ textAlign: 'right' }} onChangeText={(txt) => setTitle(txt)} />
-                </View>
-                <View style={styles.rowStyle}>
-                    <Text>Notes</Text>
-                    <TextInput placeholder={"notes"} style={{ textAlign: 'right' }} onChangeText={(txt) => eventData.notes = txt} />
-                </View>
+        <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
+            <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 20 }}>
+                <TextInput placeholder={"제목"} style={{ fontSize: 30 }} onChangeText={(txt) => setTitle(txt)} />
 
-                <View style={styles.rowStyle}>
-                    <View>
-                        <TouchableOpacity onPress={() => showDatepicker(true)}><Text>set Start Date</Text></TouchableOpacity>
-                        <TouchableOpacity onPress={() => showDatepicker(false)}><Text>set End Date</Text></TouchableOpacity>
-                    </View>
-
-                    {show && (
-                        <DateTimePicker
-                            testID="dateTimePicker"
-                            value={date}
-                            mode={mode}
-                            is24Hour={true}
-                            display="default"
-                            onChange={onChange}
-                        />
-                    )}
-                </View>
                 <View>
-                    <Text>startDate{eventData.startDate}</Text>
-                    <Text>endDate{JSON.stringify(eventData.endDate)}</Text>
-                    <Button onPress={() => { console.log(eventData.endDate) }} title={"test"}></Button>
+
+                    <TouchableOpacity onPress={() => showDatepicker(true)} >
+                        <View style={styles.rowStyleDate}>
+                            <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
+                            <Text style={{ textAlign: 'right' }}>{moment(eventData.startDate).format('MM월 DD일  hh시 mm분')}</Text>
+                        </View>
+                    </TouchableOpacity>
+
+
+                    <TouchableOpacity onPress={() => showDatepicker(false)}>
+                        <View style={styles.rowStyleDate}>
+                            <Text style={{ fontSize: 15, }}>종료    </Text>
+                            <Text style={{ textAlign: 'right' }}>{moment(eventData.endDate).format('MM월 DD일  hh시 mm분')}</Text>
+                        </View>
+                    </TouchableOpacity>
+
                 </View>
 
 
+                {show && (
+                    <DateTimePicker
+                        testID="dateTimePicker"
+                        value={date}
+                        mode={mode}
+                        is24Hour={true}
+                        display="default"
+                        onChange={onChange}
+                    />
+                )}
+
+                <TextInput placeholder={"메모"} style={{ fontSize: 20 }} onChangeText={(txt) => eventData.description = txt} />
+                <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')}><Text>캘린더 위치</Text></TouchableOpacity>
+                    {calNameShow}
+                </View>
+
+                <TouchableOpacity><Text>알람</Text></TouchableOpacity>
+                <TouchableOpacity><Text>반복 없음</Text></TouchableOpacity>
+
+
+                <View>
+                    <Button onPress={() => { onSaveEventHandle() }} title={"저장"}></Button>
+                </View>
+
+                <Toast ref={toastRef}
+                    positionValue={200}
+                    fadeInDuration={200}
+                    fadeOutDuration={1000}
+                    style={{ backgroundColor: 'rgba(33, 87 ,243, 0.5)' }}
+                />
             </View>
         </View>
     )
 }
+const selectCal = ({ navigation }) => {
+    const [data, setData] = useState();
+    const [data2, setData2] = useState();
+    const [data3, setData3] = useState();
+    useEffect(() => {
+        init();
+    }, [])
+    let googleCalData
+    let localCalData
+    let samCalData
+    let calendars
+    const init = async () => {
+        console.log("initOn")
+        calendars = await RNCalendarEvents.findCalendars();
+
+        googleCalData =
+            calendars.filter((i) => {
+                return (i.type === ('com.google'))
+            })
+
+
+        localCalData =
+            calendars.filter((i) => {
+                return i.type === ('LOCAL')
+            }
+            )
+        samCalData = calendars.filter((i) => {
+            return i.type === ('com.osp.app.signin')
+        })
+
+
+        // console.log(googleCalData);
+        // console.log(localCalData);
+
+        setDatas();
+    }
+    const selectedCal = (id, title) => {
+        // setEventData({ ...eventData, ["calendarId"]: id });
+        navigation.navigate('Save Event', { id: id, title, title });
+    }
+    const setDatas = () => {
+        setData(
+            googleCalData.map((i, key) => {
+                return (
+                    <View key={key}>
+                        <TouchableOpacity onPress={() => { selectedCal(i.id, i.title) }}>
+                            <Text style={{ fontSize: 20 }}>{i.title}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            })
+        )
+        setData2(
+            localCalData.map((i, key) => {
+                return (
+                    <View key={key}>
+                        <TouchableOpacity onPress={() => { selectedCal(i.id, i.title) }}>
+                            <Text style={{ fontSize: 20 }}>{i.title}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            })
+        )
+        setData3(
+            samCalData.map((i, key) => {
+                return (
+                    <View key={key}>
+                        <TouchableOpacity onPress={() => { selectedCal(i.id, i.title) }}>
+                            <Text style={{ fontSize: 20 }}>{i.title}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            })
+        )
+    }
+
+    return (
+        <View style={{ margin: 30 }}>
+            <Text style={{ fontSize: 30, fontWeight: 'bold', }}>Google Calendars</Text>
+            {data}
+            <Text style={{ fontSize: 30, fontWeight: 'bold', }}>Local Calendars</Text>
+            {data2}
+            <Text style={{ fontSize: 30, fontWeight: 'bold', }}>Samsung Calendars</Text>
+            {data3}
+        </View>
+    )
+}
+const EventStack = createStackNavigator();
+
+
+export default eventSave = () => {
+    return (
+
+        <EventStack.Navigator initialRouteName={"Save Event"} >
+            <EventStack.Screen name={"Save Event"} component={eventSaveMain} />
+            <EventStack.Screen name={"Select Calendar"} component={selectCal} />
+        </EventStack.Navigator>
+
+    )
+
+}
 
 const styles = StyleSheet.create({
     rowStyle: {
+        flexDirection: 'row'
+    },
+    fontsStyle: {
+        fontSize: 20
+    },
+    rowStyleDate: {
         flexDirection: 'row',
-        alignItems: 'center'
-    }
+        height: 30,
+    },
 
 })
