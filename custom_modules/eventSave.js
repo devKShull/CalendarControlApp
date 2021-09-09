@@ -15,10 +15,10 @@ const eventSaveMain = ({ navigation, route }) => {
     const [eventData, setEventData] = useState({
         calendarId: null,       //저장될 캘린더 ID
         //notes: 'test Notes',    //메모
-        startDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z', //시작시간
-        endDate: moment(date).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
+        startDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z', //시작시간
+        endDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
-        description: 'test Description',
+        description: null,
         recurrence: 'none' //반복
     })
     let calId = { id: null, title: null };
@@ -34,9 +34,11 @@ const eventSaveMain = ({ navigation, route }) => {
     // }
     const [eventTitle, setTitle] = useState();
     const [calNameShow, setCalNameShow] = useState()
+
     useEffect(() => {
         // console.log(route.params);
         calId = route.params;
+
 
         if (calId != null) {
             setEventData({ ...eventData, ["calendarId"]: calId.id })
@@ -67,8 +69,8 @@ const eventSaveMain = ({ navigation, route }) => {
         } else {
             // console.log(isStart);
             //YYYY-MM-DDThh:mm:ss.SSSZ
-            const forDate = moment(currentDate).format('YYYY-MM-DDThh:mm:ss.SSS');
-
+            const forDate = moment(currentDate).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS');
+            console.log(forDate);
             isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
             console.log('evttime');
             console.log(eventData.startDate);
@@ -94,14 +96,15 @@ const eventSaveMain = ({ navigation, route }) => {
     const onSaveEventHandle = async () => {
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
-        } else if (calId.title == null) {
+        } else if (route.params == null) {
             showToast('캘린더를 선택하세요');
         }
         else {
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
             // console.log(id);
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
-            Keyboard.dismiss
+            console.log(eventData.startDate);
+            Keyboard.dismiss()
             setTimeout(() => {
                 navigation.navigate('Calendar Test');
             }, 1500);
@@ -127,7 +130,7 @@ const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(true)} >
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
-                            <Text style={{ textAlign: 'right' }}>{moment(eventData.startDate).format('MM월 DD일  hh시 mm분')}</Text>
+                            <Text style={{ textAlign: 'right' }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>
                         </View>
                     </TouchableOpacity>
 
@@ -135,7 +138,7 @@ const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(false)}>
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, }}>종료    </Text>
-                            <Text style={{ textAlign: 'right' }}>{moment(eventData.endDate).format('MM월 DD일  hh시 mm분')}</Text>
+                            <Text style={{ textAlign: 'right' }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>
                         </View>
                     </TouchableOpacity>
 
