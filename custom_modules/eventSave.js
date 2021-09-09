@@ -7,6 +7,8 @@ import RNCalendarEvents from 'react-native-calendar-events';
 import Toast from 'react-native-easy-toast';
 import { createStackNavigator } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
+import CheckBox from '@react-native-community/checkbox'
+
 
 
 
@@ -19,7 +21,8 @@ const eventSaveMain = ({ navigation, route }) => {
         endDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
-        recurrence: 'none' //반복
+        recurrence: 'none', //반복
+
     })
     let calId = { id: null, title: null };
     // const [calId, setCalId] = useState()
@@ -34,17 +37,26 @@ const eventSaveMain = ({ navigation, route }) => {
     // }
     const [eventTitle, setTitle] = useState();
     const [calNameShow, setCalNameShow] = useState()
-
+    const [isAllDay, setIsAllDay] = useState(false);
+    const allDayFunc = (val) => {
+        setEventData({ ...eventData, allDay: val });
+        setIsAllDay(val);
+    }
     useEffect(() => {
         // console.log(route.params);
-        calId = route.params;
+        if (route.params != null) {
+            calId = {
+                id: route.params.id,
+                title: route.params.title
+            };
+        }
 
 
-        if (calId != null) {
+        if (calId.id != null) {
             setEventData({ ...eventData, ["calendarId"]: calId.id })
             if (calId.title != null) {
                 // console.log(calId.title);
-                setCalNameShow(<Text style={{ textAlign: 'right', flex: 1 }}>{calId.title} 선택됨</Text>)
+                setCalNameShow(<Text style={{ textAlign: 'center', flex: 1, marginVertical: 15 }}>{calId.title} 선택됨</Text>)
                 showToast(calId.title + "캘린더가 선택되었습니다.")
             }
         }
@@ -54,32 +66,37 @@ const eventSaveMain = ({ navigation, route }) => {
     }, [route.params])
 
     const onChange = (event, selectedDate) => {
-        const currentDate = selectedDate || date;
-        //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-        // console.log(currentDate);
-        // console.log(date);
-        // console.log(selectedDate);
+        if (selectedDate != null) {
+            const currentDate = selectedDate || date;
+            console.log('sdsds' + selectedDate);
+            //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
+            // console.log(currentDate);
+            // console.log(date);
+            // console.log(selectedDate);
 
-        setShow(false);
-        setDate(currentDate);
-        if (mode === 'date') {
-            showMode('time');
+            setShow(false);
+            setDate(currentDate);
+            if (mode === 'date') {
+                showMode('time');
 
-            // console.log(mode);
+                // console.log(mode);
+            } else {
+                // console.log(isStart);
+                //YYYY-MM-DDThh:mm:ss.SSSZ
+                const forDate = moment(currentDate).add("03:00").format('YYYY-MM-DDThh:mm:ss.SSS');
+                console.log(forDate);
+                isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
+                console.log('evttime');
+                console.log(eventData.startDate);
+                // console.log("date")
+                // console.log(date)
+                // console.log("--------------------")
+                // console.log(eventData.startDate)
+                // console.log("-------------------")
+                // console.log(eventData.endDate)
+            }
         } else {
-            // console.log(isStart);
-            //YYYY-MM-DDThh:mm:ss.SSSZ
-            const forDate = moment(currentDate).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS');
-            console.log(forDate);
-            isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
-            console.log('evttime');
-            console.log(eventData.startDate);
-            // console.log("date")
-            // console.log(date)
-            // console.log("--------------------")
-            // console.log(eventData.startDate)
-            // console.log("-------------------")
-            // console.log(eventData.endDate)
+            setShow(false);
         }
     };
 
@@ -94,6 +111,7 @@ const eventSaveMain = ({ navigation, route }) => {
         showMode('date');
     };
     const onSaveEventHandle = async () => {
+        Keyboard.dismiss()
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
         } else if (route.params == null) {
@@ -104,7 +122,7 @@ const eventSaveMain = ({ navigation, route }) => {
             // console.log(id);
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
             console.log(eventData.startDate);
-            Keyboard.dismiss()
+
             setTimeout(() => {
                 navigation.navigate('Calendar Test');
             }, 1500);
@@ -122,7 +140,7 @@ const eventSaveMain = ({ navigation, route }) => {
 
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
-            <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 20 }}>
+            <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
                 <TextInput placeholder={"제목"} style={{ fontSize: 30 }} onChangeText={(txt) => setTitle(txt)} />
 
                 <View>
@@ -141,7 +159,14 @@ const eventSaveMain = ({ navigation, route }) => {
                             <Text style={{ textAlign: 'right' }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>
                         </View>
                     </TouchableOpacity>
-
+                    <View style={{ flexDirection: 'row' }}>
+                        <CheckBox
+                            value={isAllDay}
+                            disabled={false}
+                            onValueChange={(val) => { allDayFunc(val); }}
+                        />
+                        <Text style={{ marginLeft: 15 }}>하루종일</Text>
+                    </View>
                 </View>
 
 
@@ -158,12 +183,14 @@ const eventSaveMain = ({ navigation, route }) => {
 
                 <TextInput placeholder={"메모"} style={{ fontSize: 20 }} onChangeText={(txt) => eventData.description = txt} />
                 <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')}><Text>캘린더 위치</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')}><Text style={styles.touchText}>캘린더 위치</Text></TouchableOpacity>
                     {calNameShow}
                 </View>
 
-                <TouchableOpacity><Text>알람</Text></TouchableOpacity>
-                <TouchableOpacity><Text>반복 없음</Text></TouchableOpacity>
+                <TouchableOpacity><Text style={styles.touchText}>알람</Text></TouchableOpacity>
+
+                <TouchableOpacity>
+                    <Text style={styles.touchText}>반복 없음</Text></TouchableOpacity>
 
 
                 <View>
@@ -267,18 +294,33 @@ const selectCal = ({ navigation }) => {
         </View>
     )
 }
+
+
 const EventStack = createStackNavigator();
 
 
 export default eventSave = () => {
+
+
+    const recurrenceCal = ({ navigation }) => {
+
+        return (
+            <View>
+
+            </View>
+        )
+    }
     return (
 
         <EventStack.Navigator initialRouteName={"Save Event"} >
             <EventStack.Screen name={"Save Event"} component={eventSaveMain} />
             <EventStack.Screen name={"Select Calendar"} component={selectCal} />
+            <EventStack.Screen name={"반복"} component={recurrenceCal} />
         </EventStack.Navigator>
 
     )
+
+
 
 }
 
@@ -293,5 +335,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         height: 30,
     },
+    touchText: {
+        marginVertical: 15,
+        fontSize: 15
+    }
 
 })
