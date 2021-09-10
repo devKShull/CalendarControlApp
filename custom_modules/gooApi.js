@@ -1,14 +1,16 @@
 
-import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
 import React, { useState, useEffect } from 'react'
 import { View, Button, Alert, TextInput, TouchableOpacity, Text, Linking, StyleSheet } from 'react-native';
 import RNCalendarEvents from 'react-native-calendar-events';
 import moment from 'moment';
+import FindCal from './findCal';
+import createCal from './createCal';
+import findCal from './findCal';
+import { Agenda, Calendar } from 'react-native-calendars';
 
 
 const calendarTest = ({ navigation }) => {
-
-    const [eId, setEid] = useState('1');
 
     const check = async () => {
         console.log("check func On")
@@ -20,27 +22,12 @@ const calendarTest = ({ navigation }) => {
         }
         else { setPerState(res); }
     }
-
     useEffect(() => {
         check();
     }, []);
 
     const [perState, setPerState] = useState();
-    const TextHandle = (txt) => {
-        setEid(
-            txt
-        )
-        console.log(eId);
-    }
 
-    const findHandle = async () => {
-        console.log('eId=>' + eId);
-        var data = await RNCalendarEvents.findEventById(eId);
-        console.log(data);
-        if (data != null) {
-            Alert.alert(data.title, '시작시간' + data.startDate + '\n종료시간' + data.endDate + '\nevent Id 값' + data.id + "\n위치" + data.location + '\n설명' + data.description);
-        }
-    }
     const fetchF = async () => {
         const res = await RNCalendarEvents.fetchAllEvents('2021-09-09T00:00:00.000Z', '2021-09-10T19:26:00.000Z');
         console.log(res);
@@ -50,6 +37,7 @@ const calendarTest = ({ navigation }) => {
 
     return (
         <View style={{ margin: 10, }}>
+
             <View style={{ flexDirection: 'row' }}>
                 <Text style={{ flex: 1, alignSelf: 'center' }}>권한 상태: {perState}</Text>
                 {/* {perState != "authorized" && <TouchableOpacity
@@ -59,13 +47,14 @@ const calendarTest = ({ navigation }) => {
                     <Text style={{ alignSelf: 'center', color: 'white' }}>request Permission</Text>
                 </TouchableOpacity>} */}
             </View>
-            <View style={{ flexDirection: 'row' }}>
+            {/* <View style={{ flexDirection: 'row' }}>
                 <TouchableOpacity
                     onPress={() => { navigation.navigate("Calendar Finds"); }} style={Styles.touchs}><Text style={{ color: 'white' }}>캘린더 조회</Text></TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => { navigation.navigate("Create Calendars") }} style={Styles.touchs}><Text style={{ color: 'white' }}>캘린더 추가</Text></TouchableOpacity>
-            </View>
-
+            </View> */}
+            {/* drawer 네비게이터로 옮김 */}
+            <Calendar />
             <View style={{ flexDirection: 'row' }}>
                 {/* <TextInput style={{ flex: 1 }} onChangeText={txt => TextHandle(txt)} placeholder={"id for find events"} /> */}
                 <TouchableOpacity
@@ -73,18 +62,13 @@ const calendarTest = ({ navigation }) => {
                     style={{ flex: 1, justifyContent: 'center' }, Styles.touchs}>
                     <Text style={{ color: 'white' }}>일정 추가</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    style={{ flex: 1, justifyContent: 'center' }, Styles.touchs}
-                    onPress={() => findHandle()}
-                >
-                    <Text style={{ alignSelf: 'center', color: 'white' }}>find events</Text>
-                </TouchableOpacity>
+
             </View>
             <Button
                 onPress={() => { fetchF() }}
                 title="fetch"
             />
-            <Button
+            {/* <Button
                 onPress={() => {
                     if (Platform.OS === 'ios') {
                         Linking.openURL('calshow:');
@@ -93,7 +77,8 @@ const calendarTest = ({ navigation }) => {
                     }
                 }}
                 title='Open Calendar App'
-            />
+            /> */}
+            {/* open 삼성캘린더 */}
 
 
 
@@ -106,8 +91,12 @@ const CustomDrawer = (props) => {
 
     return (
         <DrawerContentScrollView {...props} >
-            <View>
-                <Text>test drawer</Text>
+            <View style={{ margin: 10 }}>
+                <Text>Calendars</Text>
+                {/* <FindCal /> */}
+                {/* <Button title="추가" onPress={props.navigation.navigate('Create Cal')} /> */}
+                <DrawerItemList {...props} />
+                <DrawerItem label="button test" />
             </View>
         </DrawerContentScrollView>
     )
@@ -119,6 +108,8 @@ const gooApi = () => {
             initialRouteName="calTest"
             drawerContent={(props) => <CustomDrawer {...props} />}>
             <Drawer.Screen name='calTest' component={calendarTest} />
+            <Drawer.Screen name='Calendar List' component={findCal} />
+            <Drawer.Screen name='Create Cal' component={createCal} />
         </Drawer.Navigator>
     );
 }

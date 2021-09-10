@@ -1,5 +1,4 @@
-import React, { useState, useRef, Component } from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import gooApi from './custom_modules/gooApi';
@@ -25,27 +24,6 @@ const App = () => {
 
 };
 
-const Styles = StyleSheet.create({
-  centerView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  eachView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  btn: {
-    height: 5
-  },
-  touch: {
-    height: 40,
-    backgroundColor: '#6666ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 5,
-  }
-})
+
 
 export default App;
