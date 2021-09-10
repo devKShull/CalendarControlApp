@@ -6,9 +6,8 @@ import moment from 'moment'
 import RNCalendarEvents from 'react-native-calendar-events';
 import Toast from 'react-native-easy-toast';
 import { createStackNavigator } from '@react-navigation/stack'
-import { NavigationContainer } from '@react-navigation/native'
 import CheckBox from '@react-native-community/checkbox'
-
+import { Picker } from '@react-native-picker/picker'
 
 
 
@@ -16,47 +15,65 @@ const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
     const [eventData, setEventData] = useState({
         calendarId: null,       //저장될 캘린더 ID
-        //notes: 'test Notes',    //메모
         startDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z', //시작시간
         endDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
         recurrence: 'none', //반복
-
+        alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
     })
     let calId = { id: null, title: null };
-    // const [calId, setCalId] = useState()
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
     const [isStart, setIsStart] = useState(false);
-    // let show = false;
-    // const onChange = (event, selected) => {
-    //     const currentDate = selected || date;
-    //     show = false;
-    //     setDate(currentDate);
-    // }
     const [eventTitle, setTitle] = useState();
     const [calNameShow, setCalNameShow] = useState()
     const [isAllDay, setIsAllDay] = useState(false);
+    const [recurrenceData, setRecurrence] = useState('none');
+    const [initDate, setInitDate] = useState(false);
+    const [alarmShow, setAlarmShow] = useState();
+    let alarmData = [{ date: null }];
     const allDayFunc = (val) => {
         setEventData({ ...eventData, allDay: val });
         setIsAllDay(val);
     }
     useEffect(() => {
-        // console.log(route.params);
         if (route.params != null) {
             calId = {
                 id: route.params.id,
                 title: route.params.title
             };
+            if (route.params.alarmsParams != null) { //알림설정후 받은 params 로 알림데이터 설정
+                alarmData = route.params.alarmsParams
+                setEventData({ ...eventData, alarms: alarmData })
+                console.log(alarmData)
+                setAlarmShow(
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <Text style={{ textAlign: 'right', flex: 1 }}>
+                            {alarmData.map((i) => {
+                                console.log(i.date)
+                                switch (i.date) {
+                                    case 0:
+                                        return '일정 시작시간 '
+                                    case 10:
+                                        return '10분 전 '
+                                    case 60:
+                                        return '1시간 전 '
+                                    case 1440:
+                                        return '1일 전 '
+                                }
+                            })}
+                        </Text>
+                    </View>
+                )
+            }
         }
-
 
         if (calId.id != null) {
             setEventData({ ...eventData, ["calendarId"]: calId.id })
             if (calId.title != null) {
                 // console.log(calId.title);
-                setCalNameShow(<Text style={{ textAlign: 'center', flex: 1, marginVertical: 15 }}>{calId.title} 선택됨</Text>)
+                setCalNameShow(<Text style={{ textAlign: 'right', marginVertical: 15, flex: 1 }}>{calId.title} 선택됨</Text>)
                 showToast(calId.title + "캘린더가 선택되었습니다.")
             }
         }
@@ -65,37 +82,36 @@ const eventSaveMain = ({ navigation, route }) => {
         }
     }, [route.params])
 
-    const onChange = (event, selectedDate) => {
+
+    const onChange = (event, selectedDate) => { //날짜선택시
         if (selectedDate != null) {
             const currentDate = selectedDate || date;
-            console.log('sdsds' + selectedDate);
+
             //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-            // console.log(currentDate);
-            // console.log(date);
-            // console.log(selectedDate);
 
             setShow(false);
             setDate(currentDate);
-            if (mode === 'date') {
-                showMode('time');
-
-                // console.log(mode);
-            } else {
-                // console.log(isStart);
-                //YYYY-MM-DDThh:mm:ss.SSSZ
-                const forDate = moment(currentDate).add("03:00").format('YYYY-MM-DDThh:mm:ss.SSS');
-                console.log(forDate);
+            if (isAllDay) { //allDay 선택시 시작날짜 및 종료날짜 00시00분00초로 동기화
+                const forDate = moment(currentDate).format('YYYY-MM-DDT00:00:00.000');
                 isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
-                console.log('evttime');
-                console.log(eventData.startDate);
-                // console.log("date")
-                // console.log(date)
-                // console.log("--------------------")
-                // console.log(eventData.startDate)
-                // console.log("-------------------")
-                // console.log(eventData.endDate)
+            } else if (mode === 'date') {
+                showMode('time');
+                //날짜 선택 완료시 시간선택모드로
+            } else {
+                //YYYY-MM-DDThh:mm:ss.SSSZ 시간 입력 포맷
+                const forDate = moment(currentDate).add("03:00").format('YYYY-MM-DDThh:mm:ss.SSS');
+                if (isStart) { //시작 시간을 설정하였는가?
+                    initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate 가장 처음 선택시 시작 종료시간 동시설정
+                        : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                    setInitDate(true);
+                } else {//종료시간 선택
+                    initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate 가장 처음 선택시 시작 종료시간 동시설정
+                        : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                    setInitDate(true);
+                }
+                // isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });  
             }
-        } else {
+        } else { //선택된 데이터가 없을시 dateTimePicker 종료
             setShow(false);
         }
     };
@@ -110,24 +126,24 @@ const eventSaveMain = ({ navigation, route }) => {
         setIsStart(isStart)
         showMode('date');
     };
-    const onSaveEventHandle = async () => {
-        Keyboard.dismiss()
+
+    const onSaveEventHandle = async () => { //저장 기능
+        Keyboard.dismiss() //키보드 사라지게함
+        const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
         } else if (route.params == null) {
             showToast('캘린더를 선택하세요');
+        } else if (eventData.startDate == eventData.endDate || !dateWarning) {
+            showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
         }
         else {
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
-            // console.log(id);
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
-            console.log(eventData.startDate);
-
             setTimeout(() => {
                 navigation.navigate('Calendar Test');
             }, 1500);
         }
-
     }
 
     const toastRef = useRef();
@@ -135,20 +151,19 @@ const eventSaveMain = ({ navigation, route }) => {
         toastRef.current.show(txt, 2000);
     }
 
-
-
-
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
             <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
-                <TextInput placeholder={"제목"} style={{ fontSize: 30 }} onChangeText={(txt) => setTitle(txt)} />
+                <TextInput placeholder={"제목"} style={{ fontSize: 30, backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
 
                 <View>
 
                     <TouchableOpacity onPress={() => showDatepicker(true)} >
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
-                            <Text style={{ textAlign: 'right' }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>
+                            {isAllDay ?
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
 
@@ -156,7 +171,9 @@ const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(false)}>
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, }}>종료    </Text>
-                            <Text style={{ textAlign: 'right' }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>
+                            {isAllDay ?
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
                     <View style={{ flexDirection: 'row' }}>
@@ -165,7 +182,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             disabled={false}
                             onValueChange={(val) => { allDayFunc(val); }}
                         />
-                        <Text style={{ marginLeft: 15 }}>하루종일</Text>
+                        <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
                     </View>
                 </View>
 
@@ -181,16 +198,29 @@ const eventSaveMain = ({ navigation, route }) => {
                     />
                 )}
 
-                <TextInput placeholder={"메모"} style={{ fontSize: 20 }} onChangeText={(txt) => eventData.description = txt} />
-                <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')}><Text style={styles.touchText}>캘린더 위치</Text></TouchableOpacity>
-                    {calNameShow}
+                <TextInput placeholder={"메모"} style={{ fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
+
+                <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
+                    <View style={{ flexDirection: 'row', flex: 1 }}>
+                        <Text style={styles.touchText}>캘린더 위치</Text>
+                        {calNameShow}
+                    </View>
+                </TouchableOpacity>
+
+
+                <View style={{ height: 50 }}>
+                    <TouchableOpacity onPress={() => navigation.navigate("알림", eventData.alarms)} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
+                        {alarmShow}</View></TouchableOpacity>
+
                 </View>
-
-                <TouchableOpacity><Text style={styles.touchText}>알람</Text></TouchableOpacity>
-
-                <TouchableOpacity>
-                    <Text style={styles.touchText}>반복 없음</Text></TouchableOpacity>
+                <Picker
+                    selectedValue={recurrenceData}
+                    onValueChange={(item) => { setRecurrence(item); eventData.recurrence = item; console.log(eventData.recurrence) }}>
+                    <Picker.Item label="반복 없음" value="none" />
+                    <Picker.Item label="매일 반복" value="daily" />
+                    <Picker.Item label="매주 반복" value="weekly" />
+                    <Picker.Item label="매월 반복" value="monthly" />
+                </Picker>
 
 
                 <View>
@@ -207,27 +237,31 @@ const eventSaveMain = ({ navigation, route }) => {
         </View>
     )
 }
-const selectCal = ({ navigation }) => {
+
+
+const selectCal = ({ navigation }) => { //캘린더 선택 화면
     const [data, setData] = useState();
     const [data2, setData2] = useState();
     const [data3, setData3] = useState();
+
     useEffect(() => {
         init();
     }, [])
+
     let googleCalData
     let localCalData
     let samCalData
     let calendars
+
     const init = async () => {
         console.log("initOn")
         calendars = await RNCalendarEvents.findCalendars();
 
+        //캘린더 분류
         googleCalData =
             calendars.filter((i) => {
                 return (i.type === ('com.google'))
             })
-
-
         localCalData =
             calendars.filter((i) => {
                 return i.type === ('LOCAL')
@@ -237,16 +271,12 @@ const selectCal = ({ navigation }) => {
             return i.type === ('com.osp.app.signin')
         })
 
-
-        // console.log(googleCalData);
-        // console.log(localCalData);
-
         setDatas();
     }
-    const selectedCal = (id, title) => {
-        // setEventData({ ...eventData, ["calendarId"]: id });
+    const selectedCal = (id, title) => {    //캘린더 선택시 이전화면으로 id 와 title을 넘김
         navigation.navigate('Save Event', { id: id, title, title });
     }
+
     const setDatas = () => {
         setData(
             googleCalData.map((i, key) => {
@@ -295,33 +325,90 @@ const selectCal = ({ navigation }) => {
     )
 }
 
-
-const EventStack = createStackNavigator();
-
-
-export default eventSave = () => {
-
-
-    const recurrenceCal = ({ navigation }) => {
-
-        return (
-            <View>
-
-            </View>
-        )
+const alarmCal = ({ navigation, route }) => {   // 캘린더 알림 선택 화면
+    const [alarmsParams, setAlarmsParams] = useState([]);   //알림 데이터
+    const [zero, setZero] = useState(false);
+    const [ten, setTen] = useState(false);
+    const [hour, setHour] = useState(false);
+    const [day, setDay] = useState(false);      //체크박스 선택 여부
+    useEffect(() => {
+        init();
+    }, [route])
+    const init = () => {
+        const res = route.params
+        setAlarmsParams(res);   //알림설정 변경 시 기존에 선택했던 alarms 데이터를 route로 받아옴 
+        res.map((i) => {        //switch 사용시 break 사용 주의
+            switch (i.date) {
+                case 0:
+                    setZero(true);
+                    break
+                case 10:
+                    setTen(true);
+                    break
+                case 60:
+                    setHour(true);
+                    break
+                case 1440:
+                    setDay(true);
+                    break
+            }
+        })
     }
-    return (
+    const setAlarms = (val, when) => {
+        //val 이 true 일시 알림 추가 false 일시 알림 제거
+        if (val) {
+            setAlarmsParams([...alarmsParams, { ['date']: when }])
+        } else {
+            setAlarmsParams(alarmsParams.filter(i => i.date != when));
+        }
+    }
 
+    return (
+        <View>
+            <View style={{ padding: 20 }}>
+                <View style={styles.checkStyle}>
+                    <CheckBox
+                        value={zero}
+                        disabled={false}
+                        onValueChange={(val) => { setZero(val); setAlarms(val, 0) }} />
+                    <Text style={{ fontSize: 25 }}>일정 시작시간</Text>
+                </View>
+                <View style={styles.checkStyle}>
+                    <CheckBox
+                        value={ten}
+                        disabled={false}
+                        onValueChange={(val) => { setTen(val); setAlarms(val, 10) }} />
+                    <Text style={{ fontSize: 25 }}>10분 전</Text>
+                </View>
+                <View style={styles.checkStyle}>
+                    <CheckBox
+                        value={hour}
+                        disabled={false}
+                        onValueChange={(val) => { setHour(val); setAlarms(val, 60) }} />
+                    <Text style={{ fontSize: 25 }}>1시간 전</Text>
+                </View>
+                <View style={styles.checkStyle}>
+                    <CheckBox
+                        value={day}
+                        disabled={false}
+                        onValueChange={(val) => { console.log(val); setDay(val); setAlarms(val, 1440) }} />
+                    <Text style={{ fontSize: 25 }}>1일 전</Text>
+                </View>
+                <Button title="저장" onPress={() => { navigation.navigate('Save Event', { alarmsParams }) }} />
+            </View>
+        </View>
+    )
+}
+
+const EventStack = createStackNavigator();  // 네비에기터 설정
+export default eventSave = () => {
+    return (
         <EventStack.Navigator initialRouteName={"Save Event"} >
             <EventStack.Screen name={"Save Event"} component={eventSaveMain} />
             <EventStack.Screen name={"Select Calendar"} component={selectCal} />
-            <EventStack.Screen name={"반복"} component={recurrenceCal} />
+            <EventStack.Screen name={"알림"} component={alarmCal} options={{ headerLeft: null }} />
         </EventStack.Navigator>
-
     )
-
-
-
 }
 
 const styles = StyleSheet.create({
@@ -338,6 +425,12 @@ const styles = StyleSheet.create({
     touchText: {
         marginVertical: 15,
         fontSize: 15
+    },
+    checkStyle: {
+        flexDirection: 'row',
+        marginVertical: 15,
+        alignItems: 'center'
     }
+
 
 })

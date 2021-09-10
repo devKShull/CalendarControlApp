@@ -3,6 +3,7 @@ import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigatio
 import React, { useState, useEffect } from 'react'
 import { View, Button, Alert, TextInput, TouchableOpacity, Text, Linking, StyleSheet } from 'react-native';
 import RNCalendarEvents from 'react-native-calendar-events';
+import moment from 'moment';
 
 
 const calendarTest = ({ navigation }) => {
@@ -41,9 +42,10 @@ const calendarTest = ({ navigation }) => {
         }
     }
     const fetchF = async () => {
-        const res = await RNCalendarEvents.fetchAllEvents('2021-09-08T00:00:00.000Z', '2021-09-09T19:26:00.000Z');
+        const res = await RNCalendarEvents.fetchAllEvents('2021-09-09T00:00:00.000Z', '2021-09-10T19:26:00.000Z');
         console.log(res);
-        res.map((i) => { console.log(i.alarms) });
+        res.map((i) => { console.log(i.alarms); i.alarms.map((j) => { console.log(moment(j.date).format('YYYY-MM-DDTHH:mm:ss.000')) }) });
+
     }
 
     return (
