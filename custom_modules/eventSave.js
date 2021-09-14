@@ -11,7 +11,7 @@ import { Picker } from '@react-native-picker/picker'
 
 
 
-const eventSaveMain = ({ navigation, route }) => {
+export const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
     const [eventData, setEventData] = useState({
         calendarId: null,       //저장될 캘린더 ID
@@ -32,40 +32,52 @@ const eventSaveMain = ({ navigation, route }) => {
     const [recurrenceData, setRecurrence] = useState('none');
     const [initDate, setInitDate] = useState(false);
     const [alarmShow, setAlarmShow] = useState();
-    let alarmData = [{ date: null }];
+    let alarmData = [];
     const allDayFunc = (val) => {
         setEventData({ ...eventData, allDay: val });
         setIsAllDay(val);
     }
-    useEffect(() => {
+    useEffect(async () => {
+        console.log('effect on')
+        console.log(route.params)
         if (route.params != null) {
+            console.log('params init')
             calId = {
                 id: route.params.id,
                 title: route.params.title
             };
             if (route.params.alarmsParams != null) { //알림설정후 받은 params 로 알림데이터 설정
                 alarmData = route.params.alarmsParams
-                setEventData({ ...eventData, alarms: alarmData })
+                alarmSet(alarmData);
+            }
+            //일정 수정을 위한 데이터 수신 및 적용
+            if (route.params.eventId != null) {
+                console.log('eventId init')
+                const res = await RNCalendarEvents.findEventById(route.params.eventId)
+
+                calId = {
+                    id: res.calendar.id,
+                    title: res.calendar.title
+                }
+                setEventData({ ...eventData, ["startDate"]: res.startDate, ["ednDate"]: res.endDate, ["recurrence"]: res.recurrence, ['id']: route.params.eventId });
+                setTitle(res.title);
+                if (res.allDay) {
+                    allDayFunc(true);
+                }
+                setRecurrence(res.recurrence)
+
+                const dateDif = res.alarms.map((i) => {
+                    return moment(i.date).diff(res.startDate, 'minute');
+                })
+                console.log(dateDif);
+                alarmData = dateDif.map((i) => {
+                    return { ["date"]: i }
+                })
                 console.log(alarmData)
-                setAlarmShow(
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                        <Text style={{ textAlign: 'right', flex: 1 }}>
-                            {alarmData.map((i) => {
-                                console.log(i.date)
-                                switch (i.date) {
-                                    case 0:
-                                        return '일정 시작시간 '
-                                    case 10:
-                                        return '10분 전 '
-                                    case 60:
-                                        return '1시간 전 '
-                                    case 1440:
-                                        return '1일 전 '
-                                }
-                            })}
-                        </Text>
-                    </View>
-                )
+                alarmSet(alarmData);
+                console.log('event data');
+                console.log(eventData)
+
             }
         }
 
@@ -81,6 +93,33 @@ const eventSaveMain = ({ navigation, route }) => {
         return () => {
         }
     }, [route.params])
+
+
+    const alarmSet = (alarmDataParam) => {
+        setEventData({ ...eventData, alarms: alarmDataParam })
+        console.log(eventData.alarms)
+        console.log(alarmDataParam)
+        alarmData = alarmDataParam
+        setAlarmShow(
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <Text style={{ textAlign: 'right', flex: 1 }}>
+                    {alarmDataParam.map((i) => {
+                        console.log(i.date)
+                        switch (i.date) {
+                            case 0:
+                                return '일정 시작시간 '
+                            case 10:
+                                return '10분 전 '
+                            case 60:
+                                return '1시간 전 '
+                            case 1440:
+                                return '1일 전 '
+                        }
+                    })}
+                </Text>
+            </View>
+        )
+    }
 
 
     const onChange = (event, selectedDate) => { //날짜선택시
@@ -101,11 +140,11 @@ const eventSaveMain = ({ navigation, route }) => {
                 //YYYY-MM-DDThh:mm:ss.SSSZ 시간 입력 포맷
                 const forDate = moment(currentDate).add("03:00").format('YYYY-MM-DDThh:mm:ss.SSS');
                 if (isStart) { //시작 시간을 설정하였는가?
-                    initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate 가장 처음 선택시 시작 종료시간 동시설정
+                    initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
                         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
                     setInitDate(true);
                 } else {//종료시간 선택
-                    initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate 가장 처음 선택시 시작 종료시간 동시설정
+                    initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
                         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
                     setInitDate(true);
                 }
@@ -134,7 +173,7 @@ const eventSaveMain = ({ navigation, route }) => {
             showToast('제목을 입력하세요!');
         } else if (route.params == null) {
             showToast('캘린더를 선택하세요');
-        } else if (eventData.startDate == eventData.endDate || !dateWarning) {
+        } else if (eventData.startDate != eventData.endDate && !dateWarning) {
             showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
         }
         else {
@@ -154,7 +193,7 @@ const eventSaveMain = ({ navigation, route }) => {
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
             <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
-                <TextInput placeholder={"제목"} style={{ fontSize: 30, backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
+                <TextInput placeholder={"제목"} value={eventTitle} style={{ fontSize: 30, backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
 
                 <View>
 
@@ -209,7 +248,7 @@ const eventSaveMain = ({ navigation, route }) => {
 
 
                 <View style={{ height: 50 }}>
-                    <TouchableOpacity onPress={() => navigation.navigate("알림", eventData.alarms)} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
+                    <TouchableOpacity onPress={() => { console.log(alarmData); navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
                         {alarmShow}</View></TouchableOpacity>
 
                 </View>
@@ -336,6 +375,8 @@ const alarmCal = ({ navigation, route }) => {   // 캘린더 알림 선택 화�
     }, [route])
     const init = () => {
         const res = route.params
+        console.log('alarmCal');
+        console.log(res);
         setAlarmsParams(res);   //알림설정 변경 시 기존에 선택했던 alarms 데이터를 route로 받아옴 
         res.map((i) => {        //switch 사용시 break 사용 주의
             switch (i.date) {

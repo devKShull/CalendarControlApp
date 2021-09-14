@@ -3,6 +3,8 @@ import RNCalendarEvents from "react-native-calendar-events";
 import React, { useRef } from "react";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import Toast from 'react-native-easy-toast';
+import { useState } from "react/cjs/react.development";
+import { useFocusEffect } from "@react-navigation/native";
 
 
 export default createCal = ({ navigation }) => {
@@ -22,19 +24,23 @@ export default createCal = ({ navigation }) => {
         ownerAccount: 'LOCAL',
     }
     const submitSave = async () => {
-
+        setState(false);
+        Keyboard.dismiss();
         console.log("setSave");
         const id = await RNCalendarEvents.saveCalendar(calInfO);
         // console.log(id);
         Keyboard.dismiss();
         showToast(id);
         setTimeout(() => {
+            setState(true);
             navigation.goBack();
         }, 1500);
 
 
 
     }
+
+    const [state, setState] = useState(true);
     const toastRef = useRef();
     const showToast = (id) => {
         toastRef.current.show(calInfO.title + '캘린더가 생성되었습니다. id: ' + id, 2000);
@@ -51,7 +57,7 @@ export default createCal = ({ navigation }) => {
                 <TextInput placeholder="testCalName" style={{ flex: 2, }} onChangeText={(text) => calInfO.name} />
             </View>
 
-            <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => { submitSave() }}><Text style={{ fontSize: 20 }}>저장</Text></TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => { state && submitSave() }}><Text style={{ fontSize: 20 }}>저장</Text></TouchableOpacity>
             <Toast ref={toastRef}
                 positionValue={200}
                 fadeInDuration={200}

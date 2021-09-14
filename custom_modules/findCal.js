@@ -1,10 +1,12 @@
-import { TouchableOpacity, View, Text } from 'react-native'
+import { TouchableOpacity, View, Text, Switch } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react'
 import RNCalendarEvents from 'react-native-calendar-events'
 import Toast from 'react-native-easy-toast'
+import { useFocusEffect, useIsFocused } from '@react-navigation/native'
+import { Icon } from 'react-native-vector-icons/dist/FontAwesome'
 
 
-const findCal = ({ navigaitor }) => {
+const findCal = ({ navigation }) => {
     // const [calendars, setCalendars] = useState(route.params)
     const toastRef = useRef();
     const showToast = (title) => {
@@ -23,6 +25,7 @@ const findCal = ({ navigaitor }) => {
     const [data, setData] = useState();
     const [data2, setData2] = useState();
     const [data3, setData3] = useState();
+    const [isRemove, setIsRemove] = useState(false);
     //const [googleCalData, setGoogleCalData] = useState()
     let googleCalData;
     // googleCalData.push(<Text key={'gD'}>Googl calendar Sources</Text>);
@@ -30,21 +33,19 @@ const findCal = ({ navigaitor }) => {
     let localCalData;
     // LocalCalData.push(<Text key={'lD'}>Local Calendar Source</Text>);
     let samCalData;
+    const isfocused = useIsFocused();
 
+    useFocusEffect(
+        React.useCallback(() => {
+            init();
+
+        }, [])
+    )
     useEffect(() => {
-        //RNCalendarEvents.findCalendars().then(calendars);
-        // console.log("USEEFEECT-------------------------------------");
-        // console.log(calendars);
-        console.log("Effect on")
-        init();
+        init()
 
+    }, [isRemove])
 
-
-        //console.log('GOOGLE: ' + googleCalData + 'LOCAL: ' + LocalCalData)
-
-        return () => {
-        }
-    }, [calendars])
     const init = async () => {
         console.log("initOn")
         calendars = await RNCalendarEvents.findCalendars();
@@ -68,6 +69,8 @@ const findCal = ({ navigaitor }) => {
 
         setDatas();
     }
+
+
 
     const setDatas = () => {
         // calendars.map((i, key) => {
@@ -97,7 +100,11 @@ const findCal = ({ navigaitor }) => {
             googleCalData.map((i, key) => {
                 return (
                     <View key={key}>
-                        <TouchableOpacity onPress={() => { remove(i.id, key, i.title) }}>
+                        {/* {isRemove &&
+                            <Icon name="close" />} */}
+                        <TouchableOpacity onPress={() => {
+                            if (isRemove) { remove(i.id, key, i.title) }
+                        }}>
                             <Text>{i.title}</Text>
                         </TouchableOpacity>
                     </View>
@@ -108,7 +115,15 @@ const findCal = ({ navigaitor }) => {
             localCalData.map((i, key) => {
                 return (
                     <View key={key}>
-                        <TouchableOpacity onPress={() => { remove(i.id, key, i.title) }}>
+                        {/* {isRemove &&
+                            <Icon name="close" />} */}
+                        <TouchableOpacity onPress={() => {
+                            console.log(isRemove)
+                            if (isRemove) {
+                                console.log('remove go')
+                                remove(i.id, key, i.title)
+                            }
+                        }}>
                             <Text>{i.title}</Text>
                         </TouchableOpacity>
                     </View>
@@ -119,7 +134,11 @@ const findCal = ({ navigaitor }) => {
             samCalData.map((i, key) => {
                 return (
                     <View key={key}>
-                        <TouchableOpacity onPress={() => { remove(i.id, key, i.title) }}>
+                        {/* {isRemove &&
+                            <Icon name="close" />} */}
+                        <TouchableOpacity onPress={() => {
+                            if (isRemove) { remove(i.id, key, i.title) }
+                        }}>
                             <Text>{i.title}</Text>
                         </TouchableOpacity>
                     </View>
@@ -171,31 +190,34 @@ const findCal = ({ navigaitor }) => {
         showToast(title);
 
     }
-    const Active = () => {
-        console.log("Active On:\n");
-
-
-        return (
+    const active =
+        (
             <View>
-                <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Google Calendars</Text>
+                {data != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Google Calendars</Text>}
                 {data}
-                <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Local Calendars</Text>
+                {data2 != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Local Calendars</Text>}
                 {data2}
-                <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Samsung Calendars</Text>
+                {data3 != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Samsung Calendars</Text>}
                 {data3}
+                {(data == '' && data2 == '' && data3 == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
             </View>
-
-
         )
 
-    }
+
 
     return (
         <View style={{ margin: 15, }}>
 
 
-            <Active />
-            <Text style={{ textAlign: 'right' }}>터치시 캘린더가 삭제됩니다</Text>
+            {active}
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
+                <Text style={{ textAlign: 'right' }}>삭제</Text>
+                <Switch
+                    value={isRemove}
+                    onValueChange={(val) => { setIsRemove(val); console.log(isRemove) }} />
+            </View>
+            {isRemove && <Text style={{ textAlign: 'right' }}>터치시 캘린더가 삭제됩니다</Text>}
+
             <Toast
                 fadeInDuration={200}
                 fadeOutDuration={500}
