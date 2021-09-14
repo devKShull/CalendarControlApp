@@ -15,13 +15,22 @@ export const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
     const [eventData, setEventData] = useState({
         calendarId: null,       //저장될 캘린더 ID
-        startDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z', //시작시간
-        endDate: moment(date).add('03:00').format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z',  //종료시간
+        startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
+        endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
         recurrence: 'none', //반복
         alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
     })
+    // let eventData = {
+    //     calendarId: null,       //저장될 캘린더 ID
+    //     startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
+    //     endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
+    //     allDay: false,
+    //     description: null,
+    //     recurrence: 'none', //반복
+    //     alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
+    // }
     let calId = { id: null, title: null };
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
@@ -38,8 +47,12 @@ export const eventSaveMain = ({ navigation, route }) => {
         setIsAllDay(val);
     }
     useEffect(async () => {
+        console.log(eventData.startDate);
+        console.log(moment(eventData.startDate).format('MM월 DD일 HH:mm'))
+        console.log(showTime)
         console.log('effect on')
         console.log(route.params)
+        let res;
         if (route.params != null) {
             console.log('params init')
             calId = {
@@ -53,13 +66,20 @@ export const eventSaveMain = ({ navigation, route }) => {
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
                 console.log('eventId init')
-                const res = await RNCalendarEvents.findEventById(route.params.eventId)
+                res = await RNCalendarEvents.findEventById(route.params.eventId)
 
+                console.log(sibal)
                 calId = {
                     id: res.calendar.id,
                     title: res.calendar.title
                 }
-                setEventData({ ...eventData, ["startDate"]: res.startDate, ["ednDate"]: res.endDate, ["recurrence"]: res.recurrence, ['id']: route.params.eventId });
+
+                console.log(res);
+                const date = { start: moment(res.startDate).add('09:00'), end: moment(res.endDate).add('09:00') }
+
+                setEventData({ ...eventData, startDate: date.start, endDate: date.end, recurrence: res.recurrence, id: route.params.eventId })
+
+                setShowTime({ start: res.startDate, end: res.endDate });
                 setTitle(res.title);
                 if (res.allDay) {
                     allDayFunc(true);
@@ -76,11 +96,9 @@ export const eventSaveMain = ({ navigation, route }) => {
                 console.log(alarmData)
                 alarmSet(alarmData);
                 console.log('event data');
-                console.log(eventData)
 
             }
         }
-
         if (calId.id != null) {
             setEventData({ ...eventData, ["calendarId"]: calId.id })
             if (calId.title != null) {
@@ -89,10 +107,12 @@ export const eventSaveMain = ({ navigation, route }) => {
                 showToast(calId.title + "캘린더가 선택되었습니다.")
             }
         }
-
+        console.log(eventData);
         return () => {
         }
     }, [route.params])
+
+
 
 
     const alarmSet = (alarmDataParam) => {
@@ -121,33 +141,47 @@ export const eventSaveMain = ({ navigation, route }) => {
         )
     }
 
-
+    const [showTime, setShowTime] = useState({ start: eventData.startDate, end: eventData.endDate });
     const onChange = (event, selectedDate) => { //날짜선택시
         if (selectedDate != null) {
             const currentDate = selectedDate || date;
-
+            //선택되는 시간은 GPT기준 한국시간으로 9시간 더해야함
             //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-
+            console.log(currentDate);
             setShow(false);
             setDate(currentDate);
+            const forDate = moment(currentDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS');
+            const forDate2 = moment(currentDate).format('YYYY-MM-DDTHH:mm:ss.SSS');
             if (isAllDay) { //allDay 선택시 시작날짜 및 종료날짜 00시00분00초로 동기화
-                const forDate = moment(currentDate).format('YYYY-MM-DDT00:00:00.000');
+
                 isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
             } else if (mode === 'date') {
                 showMode('time');
                 //날짜 선택 완료시 시간선택모드로
             } else {
-                //YYYY-MM-DDThh:mm:ss.SSSZ 시간 입력 포맷
-                const forDate = moment(currentDate).add("03:00").format('YYYY-MM-DDThh:mm:ss.SSS');
-                if (isStart) { //시작 시간을 설정하였는가?
-                    initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
-                        : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                if (!initDate) {
+                    setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                    setShowTime({ start: forDate2, end: forDate2 });
                     setInitDate(true);
-                } else {//종료시간 선택
-                    initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
-                        : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
-                    setInitDate(true);
+                } else {
+                    if (isStart) {
+                        setEventData({ ...eventData, ["startDate"]: forDate + 'Z' })
+                        setShowTime({ ...showTime, start: forDate2 });
+                    } else {
+                        setEventData({ ...eventData, ["endDate"]: forDate + 'Z' })
+                        setShowTime({ ...showTime, end: forDate2 });
+                    }
                 }
+
+                // if (isStart) { //시작 시간을 설정하였는가?
+                //     initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
+                //         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                //     setInitDate(true);
+                // } else {//종료시간 선택
+                //     initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
+                //         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
+                //     setInitDate(true);
+                // }
                 // isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });  
             }
         } else { //선택된 데이터가 없을시 dateTimePicker 종료
@@ -168,6 +202,9 @@ export const eventSaveMain = ({ navigation, route }) => {
 
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
+
+        // setEventData({ ...eventData, ['startDate']: moment(eventData.startDate).add('03:00'), ["endDate"]: moment(eventData.endDate).add("03:00") })
+        console.log(eventData.startDate);
         const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
@@ -201,8 +238,8 @@ export const eventSaveMain = ({ navigation, route }) => {
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
                             {isAllDay ?
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일')}</Text> :
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>}
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.start).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.start).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
 
@@ -211,8 +248,8 @@ export const eventSaveMain = ({ navigation, route }) => {
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, }}>종료    </Text>
                             {isAllDay ?
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일')}</Text> :
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>}
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.end).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.end).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
                     <View style={{ flexDirection: 'row' }}>

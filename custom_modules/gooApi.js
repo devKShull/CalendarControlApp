@@ -82,7 +82,7 @@ const calendarTest = ({ navigation }) => {
                 // onPress={() => Alert.alert(item.name, item.alarms.date)}
                 >
                     <Text>{item.name}</Text>
-                    <Text>{moment(item.during.start).format("MM/DD  HH:MM")} ~</Text><Text>{moment(item.during.end).format("MM/DD  HH:MM")}</Text>
+                    <Text>{moment(item.during.start).format("MM/DD  HH:mm")} ~</Text><Text>{moment(item.during.end).format("MM/DD  HH:mm")}</Text>
                 </TouchableOpacity>
                 {/* <TouchableOpacity
                     onPress={() => { navigation.navigate('Save Event Main', { 'eventId': item.id }) }}
