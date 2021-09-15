@@ -1,7 +1,5 @@
 
 import RNCalendarEvents from 'react-native-calendar-events'
-import React, { useEffect } from 'react'
-import { Text } from 'react-native'
 export default calendarFetchFun = async () => {
 
     const res = await RNCalendarEvents.findCalendars()
