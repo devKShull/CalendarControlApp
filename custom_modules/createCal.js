@@ -1,10 +1,8 @@
 import { View, Text, Button, StyleSheet, Keyboard } from "react-native";
 import RNCalendarEvents from "react-native-calendar-events";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import Toast from 'react-native-easy-toast';
-import { useState } from "react/cjs/react.development";
-import { useFocusEffect } from "@react-navigation/native";
 
 
 export default createCal = ({ navigation }) => {
@@ -28,6 +26,7 @@ export default createCal = ({ navigation }) => {
         Keyboard.dismiss();
         console.log("setSave");
         const id = await RNCalendarEvents.saveCalendar(calInfO);
+
         // console.log(id);
         Keyboard.dismiss();
         showToast(id);
@@ -35,8 +34,6 @@ export default createCal = ({ navigation }) => {
             setState(true);
             navigation.goBack();
         }, 1500);
-
-
 
     }
 

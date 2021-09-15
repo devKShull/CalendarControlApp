@@ -1,5 +1,5 @@
 import { View, Text, Button, StyleSheet, Keyboard } from 'react-native'
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
@@ -8,6 +8,7 @@ import Toast from 'react-native-easy-toast';
 import { createStackNavigator } from '@react-navigation/stack'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
+import { useFocusEffect } from '@react-navigation/native'
 
 
 
@@ -41,49 +42,51 @@ export const eventSaveMain = ({ navigation, route }) => {
     const [recurrenceData, setRecurrence] = useState('none');
     const [initDate, setInitDate] = useState(false);
     const [alarmShow, setAlarmShow] = useState();
+
     let alarmData = [];
-    const allDayFunc = (val) => {
-        setEventData({ ...eventData, allDay: val });
-        setIsAllDay(val);
-    }
-    useEffect(async () => {
-        console.log(eventData.startDate);
-        console.log(moment(eventData.startDate).format('MM월 DD일 HH:mm'))
-        console.log(showTime)
-        console.log('effect on')
-        console.log(route.params)
-        let res;
+
+    const init = async () => {
+        let res
+        let id
         if (route.params != null) {
             console.log('params init')
-            calId = {
-                id: route.params.id,
-                title: route.params.title
-            };
+            if (route.params.id != null) {
+                calId = {
+                    id: route.params.id,
+                    title: route.params.title
+                };
+            }
             if (route.params.alarmsParams != null) { //알림설정후 받은 params 로 알림데이터 설정
                 alarmData = route.params.alarmsParams
                 alarmSet(alarmData);
+
             }
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
                 console.log('eventId init')
                 res = await RNCalendarEvents.findEventById(route.params.eventId)
-
-                console.log(sibal)
+                console.log("-----------------------------")
+                console.log(res)
                 calId = {
                     id: res.calendar.id,
                     title: res.calendar.title
                 }
-
-                console.log(res);
                 const date = { start: moment(res.startDate).add('09:00'), end: moment(res.endDate).add('09:00') }
 
-                setEventData({ ...eventData, startDate: date.start, endDate: date.end, recurrence: res.recurrence, id: route.params.eventId })
 
-                setShowTime({ start: res.startDate, end: res.endDate });
-                setTitle(res.title);
-                if (res.allDay) {
-                    allDayFunc(true);
+                // setEventData({ ...eventData, startDate: date.start, endDate: date.end, recurrence: res.recurrence, id: route.params.eventId })
+                // setEventData({ ...eventData, ["startDate"]: date.start, ["endDate"]: date.end, ["recurrence"]: res.recurrence, ["id"]: route.params.eventId, ["allDay"]: res.allDay });
+
+                setIsAllDay(res.allDay)
+
+                if (res.startDate == null) {
+                    setShowTime({ start: ' ', end: res.endDate });
+                } else if (res.endDate == null) {
+                    setShowTime({ start: res.startDate, end: ' ' });
+                } else {
+                    setShowTime({ start: res.startDate, end: res.endDate });
                 }
+                setTitle(res.title);
                 setRecurrence(res.recurrence)
 
                 const dateDif = res.alarms.map((i) => {
@@ -95,28 +98,63 @@ export const eventSaveMain = ({ navigation, route }) => {
                 })
                 console.log(alarmData)
                 alarmSet(alarmData);
-                console.log('event data');
+                console.log(eventData);
 
             }
         }
         if (calId.id != null) {
-            setEventData({ ...eventData, ["calendarId"]: calId.id })
+            id = calId.id
+            // setEventData({ ...eventData, ["calendarId"]: calId.id })
             if (calId.title != null) {
                 // console.log(calId.title);
                 setCalNameShow(<Text style={{ textAlign: 'right', marginVertical: 15, flex: 1 }}>{calId.title} 선택됨</Text>)
                 showToast(calId.title + "캘린더가 선택되었습니다.")
             }
         }
-        console.log(eventData);
-        return () => {
+        if (alarmData != '' && res == null) {
+            console.log('justalarm')
+            console.log(alarmData)
+            setEventData({ ...eventData, ["alarms"]: alarmData })
+        } else if (res != null) {
+            console.log('allEventData')
+            setEventData(
+                // ...eventData,
+                // ["alarms"]: alarmData,
+                // ["calendarId"]: calId.id,
+                // ["startDate"]: moment(res.startDate).add('09:00'),
+                // ["endDate"]: moment(res.endDate).add('09:00'),
+                // ["recurrence"]: res.recurrence,
+                // ["id"]: route.params.eventId,
+                // ["allDay"]: res.allDay
+                res
+            );
+        } else if (calId.id != null) {
+            setEventData({ ...eventData, ["calendarId"]: calId.id })
+            console.log('Tid')
         }
+        console.log('effect')
+        console.log(eventData);
+    }
+
+    useEffect(async () => {
+        init();
     }, [route.params])
 
 
+    useEffect(() => {
+        console.log('changed eventData');
+        console.log(eventData)
+
+    }, [eventData])
+    useEffect(() => {
+        console.log('Isallday changed');
+        console.log(isAllDay)
+
+    }, [isAllDay])
 
 
     const alarmSet = (alarmDataParam) => {
-        setEventData({ ...eventData, alarms: alarmDataParam })
+
         console.log(eventData.alarms)
         console.log(alarmDataParam)
         alarmData = alarmDataParam
@@ -134,6 +172,8 @@ export const eventSaveMain = ({ navigation, route }) => {
                                 return '1시간 전 '
                             case 1440:
                                 return '1일 전 '
+                            default:
+                                return i.date + "분 전"
                         }
                     })}
                 </Text>
@@ -203,8 +243,10 @@ export const eventSaveMain = ({ navigation, route }) => {
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
 
-        // setEventData({ ...eventData, ['startDate']: moment(eventData.startDate).add('03:00'), ["endDate"]: moment(eventData.endDate).add("03:00") })
-        console.log(eventData.startDate);
+        console.log("*******************************")
+        console.log(eventData);
+
+
         const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
@@ -214,6 +256,7 @@ export const eventSaveMain = ({ navigation, route }) => {
             showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
         }
         else {
+            console.log(eventData);
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
             setTimeout(() => {
@@ -221,6 +264,7 @@ export const eventSaveMain = ({ navigation, route }) => {
             }, 1500);
         }
     }
+
 
     const toastRef = useRef();
     const showToast = (txt) => {
@@ -256,7 +300,7 @@ export const eventSaveMain = ({ navigation, route }) => {
                         <CheckBox
                             value={isAllDay}
                             disabled={false}
-                            onValueChange={(val) => { allDayFunc(val); }}
+                            onValueChange={(val) => { setIsAllDay(val); eventData.allDay = val; }}
                         />
                         <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
                     </View>
@@ -291,11 +335,12 @@ export const eventSaveMain = ({ navigation, route }) => {
                 </View>
                 <Picker
                     selectedValue={recurrenceData}
-                    onValueChange={(item) => { setRecurrence(item); eventData.recurrence = item; console.log(eventData.recurrence) }}>
+                    onValueChange={(item) => { setRecurrence(item); eventData.recurrence = item; }}>
                     <Picker.Item label="반복 없음" value="none" />
                     <Picker.Item label="매일 반복" value="daily" />
                     <Picker.Item label="매주 반복" value="weekly" />
                     <Picker.Item label="매월 반복" value="monthly" />
+                    <Picker.Item label="매년 반복" value="yearly" />
                 </Picker>
 
 

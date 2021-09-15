@@ -2,8 +2,7 @@ import { TouchableOpacity, View, Text, Switch } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react'
 import RNCalendarEvents from 'react-native-calendar-events'
 import Toast from 'react-native-easy-toast'
-import { useFocusEffect, useIsFocused } from '@react-navigation/native'
-import { Icon } from 'react-native-vector-icons/dist/FontAwesome'
+import { useFocusEffect } from '@react-navigation/native'
 
 
 const findCal = ({ navigation }) => {
@@ -33,7 +32,6 @@ const findCal = ({ navigation }) => {
     let localCalData;
     // LocalCalData.push(<Text key={'lD'}>Local Calendar Source</Text>);
     let samCalData;
-    const isfocused = useIsFocused();
 
     useFocusEffect(
         React.useCallback(() => {
