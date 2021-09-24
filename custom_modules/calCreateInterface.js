@@ -4,18 +4,17 @@ import Toast from "react-native-easy-toast";
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Keyboard } from "react-native";
 
 export default CreateCalInterface = ({ navigation }) => {
-
-    const [calData, setCalData] = useState({ title: '', name: '' })
+    const [calData, setCalData] = useState({ title: '', name: '' }) // calenda 생성을 위해 커스텀 할 데이터 title 과 name 통합하여도 상관 없을것같음
     const [state, setState] = useState(true);
     const submitSave = async () => {
-        if (calData.title == '') {
+        if (calData.title == '') {  //title 입력 검증
             toastRef.current.show('Title 을 입력하세요')
-        } else if (calData.name == '') {
+        } else if (calData.name == '') { //name 입력 검증
             toastRef.current.show('name 을 입력하세요')
         } else {
-            setState(false)
-            Keyboard.dismiss
-            const res = await calendarClass.calCreateFunc(calData);
+            setState(false) // 생성완료 및 토스트 타임아웃 끝날때 까지 save 버튼 비활성화
+            Keyboard.dismiss();
+            const res = await calendarClass.calCreateFunc(calData); // 생성된 캘린더 id 리턴
             setCalData({ title: '', name: '' })
             showToast(res);
             setTimeout(() => {

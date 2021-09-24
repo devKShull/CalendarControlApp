@@ -10,9 +10,9 @@ import { Picker } from '@react-native-picker/picker'
 
 
 export default eventSaveMainInterface = ({ navigation, route }) => {
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(new Date()); //현재 시각 및 오늘 날자
 
-    const eventReducer = (state, action) => {
+    const eventReducer = (state, action) => { //eventData 지정을 위한 리듀서
         switch (action.type) {
             case 'calendarId':
                 return { ...state, calendarId: action.data }
@@ -47,24 +47,25 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         recurrence: 'none', //반복
         alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
     })
-    let calId = { id: null, title: null };
-    let alarmData = [];
-    const [mode, setMode] = useState('date');
-    const [show, setShow] = useState(false);
+    let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
+    let alarmData = []; //알람데이터 저장용
+    const [mode, setMode] = useState('date');   //dateTimePicker 의 모드 선택용
+    const [show, setShow] = useState(false);  // show 가 true 일때만 dateTimePicker 표시
     //Toast
     const [isStart, setIsStart] = useState(false); //시작시간true or 종료시간 false
-    const [eventTitle, setTitle] = useState();
-    const [initDate, setInitDate] = useState(false);
+    const [eventTitle, setTitle] = useState();  // 이벤트의 title은 eventData와 별개로 지정되기 때문에 따로 state 로 지정
+    const [initDate, setInitDate] = useState(false); // 초기 설정인가 에 대한 state 초기설정(dateTimePicker) 일경우 시작시간 종료시간 동시에 설정
 
-    const [alarmShow, setAlarmShow] = useState();
-    const [calNameShow, setCalNameShow] = useState();
+    const [alarmShow, setAlarmShow] = useState(); // 선택한 알림을 표기하기위한 component state 
+    const [calNameShow, setCalNameShow] = useState(); // 선택한 캘린더의 title 을 표시하기우한 component state
     const [initPicker, setInitPicker] = useState(true);
+    // 이벤트 수정시 받아온데이터에서 picker의 value 인 recurrence가 있을때 bug로 value 와 onValueChange 의 item 이 동기화되지않는것을 방지
 
 
 
     const init = async () => {
-
         if (route.params != null) {
+            // route.params 가 null일 경우 .id 혹은 다른 데이터들이 undefined로 나타나기 때문에 먼저 params 검증부터함
             if (route.params.id != null) {
                 calId = {
                     id: route.params.id,
@@ -78,16 +79,15 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
                 const res = await RNCalendarEvents.findEventById(route.params.eventId)
-                console.log('////////////////////////////');
                 console.log(res);
-
                 setTitle(res.title);
                 calId = {
                     id: res.calendar.id,
                     title: res.calendar.title
                 }
-                delete res.calendar;
-                // duration 없는 recurrence는 없어도 무관함
+                delete res.calendar; // 이벤트 저장시 캘린더에 대한 내용은 calendarId만 있으면됨
+                // duration 없는 recurrenceRule는 없어도 무관함
+                //  RecurrenceRule이 존재할시 endDate를 삭제해야 하기 때문에 duration 없을시 recurrenceRule을 삭제(recurrence 가 있으면 자동으로 생성됨)
                 if (res.recurrenceRule != null) {
                     if (res.recurrenceRule.duration == null) {
                         delete res.recurrenceRule;
@@ -110,7 +110,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     }
                 }
 
-                // 알람 데이터는 수신시 날짜형식으로 수신함 parsing
+                // 알람 데이터는 수신시 날짜형식으로 수신함 minute 단위로 parsing
                 const dateDif = res.alarms.map((i) => {
                     return moment(i.date).diff(res.startDate, 'minute');
                 })
@@ -118,12 +118,11 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     return { ["date"]: i }
                 })
                 alarmSet(alarmData);
-                setInitDate(true);
+                setInitDate(true); // 일정수정시엔 시작 종료시간 각각 설정할수 있도록 initDate true 로 설정
             }
         } else {
             setInitPicker(false);
         }
-
 
         if (calId.id != null) {
             if (calId.title != null) {
@@ -140,7 +139,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     }, [route.params])
 
     const alarmSet = (alarmDataParam) => {
-
         dispatch({ type: 'alarms', data: alarmDataParam })
         setAlarmShow(
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -155,7 +153,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                                 return '1시간 전 '
                             case 1440:
                                 return '1일 전 '
-                            default:
+                            default: // 알람데이터는 분단위로 저장되어 들어옴
                                 const hour = i.date / 60
                                 const min = i.date % 60
                                 let res = ''
@@ -226,7 +224,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const showMode = (currentMode) => {
         setMode(currentMode);
         setShow(true);
-
     };
 
     const showDatepicker = (isStart) => {
@@ -247,7 +244,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         }
         else {
             if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
-                delete eventData.endDate
+                delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
             }
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
@@ -256,13 +253,10 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             }, 1500);
         }
     }
-
-
     const toastRef = useRef();
     const showToast = (txt) => {
         toastRef.current.show(txt, 2000);
     }
-
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
             <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
@@ -278,8 +272,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                                 <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
-
-
                     <TouchableOpacity onPress={() => showDatepicker(false)}>
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, }}>종료    </Text>
@@ -297,8 +289,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
                     </View>
                 </View>
-
-
                 {show && (
                     <DateTimePicker
                         testID="dateTimePicker"
@@ -309,7 +299,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         onChange={onChange}
                     />
                 )}
-
                 <TextInput placeholder={"메모"} style={{ fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
 
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
@@ -318,12 +307,9 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         {calNameShow}
                     </View>
                 </TouchableOpacity>
-
-
                 <View style={{ height: 50 }}>
                     <TouchableOpacity onPress={() => { navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
                         {alarmShow}</View></TouchableOpacity>
-
                 </View>
                 <Picker
                     selectedValue={eventData.recurrence}
@@ -345,12 +331,9 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     <Picker.Item label="매월 반복" value="monthly" />
                     <Picker.Item label="매년 반복" value="yearly" />
                 </Picker>
-
-
                 <View>
                     <Button onPress={() => { onSaveEventHandle() }} title={"저장"}></Button>
                 </View>
-
                 <Toast ref={toastRef}
                     positionValue={200}
                     fadeInDuration={200}

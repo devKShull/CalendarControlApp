@@ -6,7 +6,6 @@ import React from 'react'
 
 
 const EventStack = createStackNavigator();  // 네비게기터 설정
-
 export default eventSave = () => {
     return (
         <EventStack.Navigator initialRouteName={"Save Event"} >

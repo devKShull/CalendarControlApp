@@ -2,9 +2,10 @@ import React, { useEffect, useReducer, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import CheckBox from '@react-native-community/checkbox'
 
+
 export default calAlarmSetInterface = ({ navigation, route }) => {   // 캘린더 알림 선택 화면
     const [alarmsParams, setAlarmsParams] = useState([]);   //알림 데이터
-    const reducer = (state, action) => {
+    const reducer = (state, action) => { // 체크박스 value 
         switch (action.type) {
             case 0:
                 return { ...state, 'zero': true }
@@ -27,22 +28,24 @@ export default calAlarmSetInterface = ({ navigation, route }) => {   // 캘린�
     useEffect(() => {
         init();
     }, [route])
+
     const init = () => {
-        if (route.params != null) {
+        if (route.params != null) { //이전에 설정한 알림데이터 route.params
             const res = route.params
             console.log('alarmCal');
             console.log(res);
-            setAlarmsParams(res);   //알림설정 변경 시 기존에 선택했던 alarms 데이터를 route로 받아옴 
-            res.map((i) => {        //switch 사용시 break 사용 주의
+            setAlarmsParams(res);  //알림데이터 변경
+            res.map((i) => { //체크박스 value 변경
                 dispatch({ type: i.date })
             })
         }
     }
+
     const setAlarms = (val, when) => {
         if (val) {
-            setAlarmsParams([...alarmsParams, { ['date']: when }])
+            setAlarmsParams([...alarmsParams, { ['date']: when }]) //알림 추가
         } else {
-            setAlarmsParams(alarmsParams.filter(i => i.date != when));
+            setAlarmsParams(alarmsParams.filter(i => i.date != when)); //알림 삭제
         }
     }
 
@@ -82,6 +85,7 @@ export default calAlarmSetInterface = ({ navigation, route }) => {   // 캘린�
         </View>
     )
 }
+
 const styles = StyleSheet.create({
     checkStyle: {
         flexDirection: 'row',

@@ -19,19 +19,16 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
                 {data.google.map((i, key) => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {
-
                             selectedCal(i.id, i.title)
                         }}>
                             <Text>{i.title}</Text>
                         </TouchableOpacity>
                     )
                 })}
-
                 {data.local != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Local Calendars</Text>}
                 {data.local.map((i, key) => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {
-
                             selectedCal(i.id, i.title)
                         }}>
                             <Text>{i.title}</Text>
@@ -42,7 +39,6 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
                 {data.samsung.map((i, key) => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {
-
                             selectedCal(i.id, i.title)
                         }}>
                             <Text>{i.title}</Text>
@@ -59,9 +55,7 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
 
     return (
         <View style={{ margin: 15, }}>
-
             {active}
-
         </View>
     )
 }

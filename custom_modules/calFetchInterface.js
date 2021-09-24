@@ -5,20 +5,18 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as calendarClass from './calendarClass'
 
 export default calendarFetchInterface = () => {
-    const [active, setActive] = useState()
-    const [isRemove, setIsRemove] = useState(false)
+    const [active, setActive] = useState() // component state
+    const [isRemove, setIsRemove] = useState(false) // 삭제모드
     const toastRef = useRef();
     useEffect(() => {
         init()
-    }, [isRemove])
+    }, [isRemove]) // isRemove 가 true나 false 로 변할시 TouchableOpacity 의 onPress 변경 및 렌더링을 위해 init() 호출
     useFocusEffect(useCallback(
         () => {
             init()
         },
         [],
     ))
-
-
     const init = async () => {
         const data = await calendarClass.calFetchFunc();
         console.log(data.google)
@@ -30,7 +28,7 @@ export default calendarFetchInterface = () => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {
                             console.log(isRemove);
-                            if (isRemove) { remove(i.id); showToast(i.title) }
+                            if (isRemove) { remove(i.id); showToast(i.title) } //remove 가 true 일때만 삭제됨
                         }}>
                             <Text>{i.title}</Text>
                         </TouchableOpacity>
@@ -66,7 +64,7 @@ export default calendarFetchInterface = () => {
     const remove = async (id) => {
         console.log('remove on')
         await calendarClass.calRemoveFunc(id);
-        init();
+        init();// 삭제된 캘린더를 없애고 다시 렌더링
     }
 
     const showToast = (title) => {
@@ -75,8 +73,6 @@ export default calendarFetchInterface = () => {
 
     return (
         <View style={{ margin: 15, }}>
-
-
             {active}
             <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
                 <Text style={{ textAlign: 'right' }}>삭제</Text>
@@ -85,7 +81,6 @@ export default calendarFetchInterface = () => {
                     onValueChange={(val) => { setIsRemove(val); console.log(isRemove) }} />
             </View>
             {isRemove && <Text style={{ textAlign: 'right' }}>터치시 캘린더가 삭제됩니다</Text>}
-
             <Toast
                 fadeInDuration={200}
                 fadeOutDuration={500}
