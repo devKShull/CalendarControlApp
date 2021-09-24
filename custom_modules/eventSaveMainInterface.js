@@ -101,7 +101,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         console.log("recurrenceRule 확인됨")
                         console.log(duration)
                         if (duration == 'P1D') {
-                            dispatch({ type: 'endDate', data: res.startDate });
+                            dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
                         } else {
                             const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
                             console.log(second)

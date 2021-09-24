@@ -36,9 +36,14 @@ export default calAgendaInterface = ({ navigation }) => {
     ))
 
     const remove = async (id, title) => {    //이벤트 삭제
-        const res = await calendarClass.eventRemoveFunc(id);
-        console.log(res) // true or false
-        fetchF();
+
+        const itemIndex = moment(title).format('YYYY-MM-DD');
+        const res = items[itemIndex].filter(i => i.id != id)
+        setItems({ ...items, [itemIndex]: res });
+        console.log(items[itemIndex])
+        const resBool = await calendarClass.eventRemoveFunc(id);
+        console.log(resBool) // true or false
+        // fetchF();
     }
 
     const renderItem = (item) => { //아이템 렌더링
@@ -56,7 +61,7 @@ export default calAgendaInterface = ({ navigation }) => {
                 <View style={{ flex: 1 }}>
                     <TouchableOpacity
                         style={[styles.item, { height: item.height }]}
-                        onPress={() => { remove(item.id, item.name); }}>
+                        onPress={() => { remove(item.id, item.during.start); }}>
                         <Text>
                             삭제
                         </Text>
