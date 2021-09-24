@@ -4,15 +4,12 @@ import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
 import RNCalendarEvents from 'react-native-calendar-events';
-import Toast from 'react-native-easy-toast';
-import { createStackNavigator } from '@react-navigation/stack'
+import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
-import selectCalInterface from './selectCalInterface'
-import calAlarmSetInterface from './calAlarmSetInterface'
 
 
-export const eventSaveMain = ({ navigation, route }) => {
+export default eventSaveMainInterface = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
 
     const eventReducer = (state, action) => {
@@ -35,6 +32,8 @@ export const eventSaveMain = ({ navigation, route }) => {
                 return action.data
             case 'date':
                 return { ...state, startDate: action.data, endDate: action.data }
+            case 'recurrenceRule':
+                return { ...state, recurrenceRule: { duration: action.data.dur, frequency: action.data.fre } }
             default:
                 break;
         }
@@ -59,13 +58,13 @@ export const eventSaveMain = ({ navigation, route }) => {
 
     const [alarmShow, setAlarmShow] = useState();
     const [calNameShow, setCalNameShow] = useState();
+    const [initPicker, setInitPicker] = useState(true);
 
 
 
     const init = async () => {
 
         if (route.params != null) {
-            console.log('params init')
             if (route.params.id != null) {
                 calId = {
                     id: route.params.id,
@@ -78,14 +77,39 @@ export const eventSaveMain = ({ navigation, route }) => {
             }
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
-                console.log('eventId init')
                 const res = await RNCalendarEvents.findEventById(route.params.eventId)
-                dispatch({ type: 'all', data: res });
+                console.log('////////////////////////////');
+                console.log(res);
+
                 setTitle(res.title);
                 calId = {
                     id: res.calendar.id,
                     title: res.calendar.title
                 }
+                delete res.calendar;
+                // duration 없는 recurrence는 없어도 무관함
+                if (res.recurrenceRule != null) {
+                    if (res.recurrenceRule.duration == null) {
+                        delete res.recurrenceRule;
+                    }
+                }
+                dispatch({ type: 'all', data: res });
+                //recurrenceRule 데이터에서 endDate 추출 09/23
+                if (res.recurrenceRule != null) {   //recurrenceRule 존재여부 먼저 확인 안할시 duration 존재에 대해 promise경고
+                    if (res.recurrenceRule.duration != null) {
+                        const duration = res.recurrenceRule.duration
+                        console.log("recurrenceRule 확인됨")
+                        console.log(duration)
+                        if (duration == 'P1D') {
+                            dispatch({ type: 'endDate', data: res.startDate });
+                        } else {
+                            const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
+                            console.log(second)
+                            dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
+                        }
+                    }
+                }
+
                 // 알람 데이터는 수신시 날짜형식으로 수신함 parsing
                 const dateDif = res.alarms.map((i) => {
                     return moment(i.date).diff(res.startDate, 'minute');
@@ -94,9 +118,12 @@ export const eventSaveMain = ({ navigation, route }) => {
                     return { ["date"]: i }
                 })
                 alarmSet(alarmData);
-
+                setInitDate(true);
             }
+        } else {
+            setInitPicker(false);
         }
+
 
         if (calId.id != null) {
             if (calId.title != null) {
@@ -119,7 +146,6 @@ export const eventSaveMain = ({ navigation, route }) => {
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <Text style={{ textAlign: 'right', flex: 1 }}>
                     {alarmDataParam.map((i) => {
-                        console.log(i.date)
                         switch (i.date) {
                             case 0:
                                 return '일정 시작시간 '
@@ -154,7 +180,6 @@ export const eventSaveMain = ({ navigation, route }) => {
             const currentDate = selectedDate || date;
             //선택되는 시간은 GPT기준 한국시간으로 9시간 더해야함
             //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-            console.log(eventData);
             setShow(false);
             setDate(currentDate);
             const forDate = moment(currentDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
@@ -174,8 +199,22 @@ export const eventSaveMain = ({ navigation, route }) => {
                 } else {
                     if (isStart) {
                         dispatch({ type: 'startDate', data: forDate })
+                        const end = moment(eventData.endDate)
+                        diffTime = moment.duration(end.diff(moment(currentDate))).asSeconds(); // 시간차 사전 계산
                     } else {
                         dispatch({ type: 'endDate', data: forDate })
+                        const start = moment(eventData.startDate)
+                        diffTime = moment.duration(moment(currentDate).diff(start)).asSeconds(); // 시간차 사전 계산
+                    }
+
+                    // save용 recurrenceRule data 09/23
+                    if (eventData.recurrenceRule != null) {
+                        if (diffTime == 0) {
+                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P1D', fre: eventData.recurrence } })
+                        } else {
+                            console.log('dispatch')
+                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P' + Math.floor(diffTime) + 'S', fre: eventData.recurrence } })
+                        }
                     }
                 }
             }
@@ -198,11 +237,6 @@ export const eventSaveMain = ({ navigation, route }) => {
 
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
-
-        console.log("*******************************")
-        console.log(eventData);
-
-
         const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
@@ -212,11 +246,13 @@ export const eventSaveMain = ({ navigation, route }) => {
             showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
         }
         else {
-            console.log(eventData);
+            if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
+                delete eventData.endDate
+            }
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
             setTimeout(() => {
-                navigation.navigate('Calendar Test');
+                navigation.navigate('Calendar');
             }, 1500);
         }
     }
@@ -237,8 +273,6 @@ export const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(true)} >
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
-                            {console.log(eventData)}
-                            {console.log('********************')}
                             {eventData.allDay ?
                                 <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일')}</Text> :
                                 <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>}
@@ -287,13 +321,24 @@ export const eventSaveMain = ({ navigation, route }) => {
 
 
                 <View style={{ height: 50 }}>
-                    <TouchableOpacity onPress={() => { console.log(alarmData); navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
+                    <TouchableOpacity onPress={() => { navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
                         {alarmShow}</View></TouchableOpacity>
 
                 </View>
                 <Picker
                     selectedValue={eventData.recurrence}
-                    onValueChange={(item) => { dispatch({ type: 'recurrence', data: item }) }}>
+                    onValueChange={(item) => {
+                        if (initPicker) {
+                            setInitPicker(false);
+                        } else {
+                            dispatch({ type: 'recurrence', data: item })
+                            if (eventData.recurrenceRule != null) {
+                                if (eventData.recurrenceRule.duration != null) {
+                                    dispatch({ type: 'recurrenceRule', data: { fre: item } });
+                                }
+                            }
+                        }
+                    }}>
                     <Picker.Item label="반복 없음" value="none" />
                     <Picker.Item label="매일 반복" value="daily" />
                     <Picker.Item label="매주 반복" value="weekly" />
@@ -316,18 +361,6 @@ export const eventSaveMain = ({ navigation, route }) => {
         </View>
     )
 }
-
-const EventStack = createStackNavigator();  // 네비게기터 설정
-export default eventSave = () => {
-    return (
-        <EventStack.Navigator initialRouteName={"Save Event"} >
-            <EventStack.Screen name={"Save Event"} component={eventSaveMain} />
-            <EventStack.Screen name={"Select Calendar"} component={selectCalInterface} />
-            <EventStack.Screen name={"알림"} component={calAlarmSetInterface} options={{ headerLeft: null }} />
-        </EventStack.Navigator>
-    )
-}
-
 const styles = StyleSheet.create({
     rowStyle: {
         flexDirection: 'row'

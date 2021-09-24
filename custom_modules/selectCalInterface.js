@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import calFetchFunc from "./calFetchFunc";
+import * as calendarClass from "./calendarClass";
 import { View, TouchableOpacity, Text } from "react-native";
 
 export default selectCal = ({ navigation }) => { //캘린더 선택 화면
@@ -10,7 +10,7 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
 
     const init = async () => {
         console.log("initOn")
-        const data = await calFetchFunc();
+        const data = await calendarClass.calFetchFunc();
         console.log(data.google)
         setActive(
             <View>

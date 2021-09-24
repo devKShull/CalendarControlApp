@@ -1,5 +1,5 @@
 import { View, Text, Button, StyleSheet, Keyboard } from 'react-native'
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
@@ -8,13 +8,41 @@ import Toast from 'react-native-easy-toast';
 import { createStackNavigator } from '@react-navigation/stack'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
+
 import { useFocusEffect } from '@react-navigation/native'
 
 
 
 export const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date());
-    const [eventData, setEventData] = useState({
+
+    const eventReducer = (state, action) => {
+        switch (action.type) {
+            case 'calendarId':
+                return { ...state, calendarId: action.data }
+            case 'startDate':
+                return { ...state, startDate: action.data }
+            case 'endDate':
+                return { ...state, endDate: action.data }
+            case 'allDay':
+                return { ...state, allDay: action.data }
+            case 'description':
+                return { ...state, description: action.data }
+            case 'recurrence':
+                return { ...state, recurrence: action.data }
+            case 'recurrenceRule':
+                return { ...state, recurrenceRule: { duration: action.data.dur, frequency: action.data.fre } }
+            case 'alarms':
+                return { ...state, alarms: action.data }
+            case 'all':
+                return action.data
+            case 'date':
+                return { ...state, startDate: action.data, endDate: action.data }
+            default:
+                break;
+        }
+    }
+    const [eventData, dispatch] = useReducer(eventReducer, {
         calendarId: null,       //저장될 캘린더 ID
         startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
         endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
@@ -23,31 +51,22 @@ export const eventSaveMain = ({ navigation, route }) => {
         recurrence: 'none', //반복
         alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
     })
-    // let eventData = {
-    //     calendarId: null,       //저장될 캘린더 ID
-    //     startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
-    //     endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
-    //     allDay: false,
-    //     description: null,
-    //     recurrence: 'none', //반복
-    //     alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
-    // }
     let calId = { id: null, title: null };
+    let alarmData = [];
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
-    const [isStart, setIsStart] = useState(false);
+    //Toast
+    const [isStart, setIsStart] = useState(false); //시작시간true or 종료시간 false
     const [eventTitle, setTitle] = useState();
-    const [calNameShow, setCalNameShow] = useState()
-    const [isAllDay, setIsAllDay] = useState(false);
-    const [recurrenceData, setRecurrence] = useState('none');
     const [initDate, setInitDate] = useState(false);
-    const [alarmShow, setAlarmShow] = useState();
 
-    let alarmData = [];
+    const [alarmShow, setAlarmShow] = useState();
+    const [calNameShow, setCalNameShow] = useState();
+    const [initPicker, setInitPicker] = useState(true);
 
     const init = async () => {
-        let res
-        let id
+        console.log("********************init")
+
         if (route.params != null) {
             console.log('params init')
             if (route.params.id != null) {
@@ -59,35 +78,43 @@ export const eventSaveMain = ({ navigation, route }) => {
             if (route.params.alarmsParams != null) { //알림설정후 받은 params 로 알림데이터 설정
                 alarmData = route.params.alarmsParams
                 alarmSet(alarmData);
-
             }
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
-                console.log('eventId init')
-                res = await RNCalendarEvents.findEventById(route.params.eventId)
-                console.log("-----------------------------")
-                console.log(res)
+                console.log('eventId init/////////////////////////////')
+                const res = await RNCalendarEvents.findEventById(route.params.eventId)
+                setTitle(res.title);
                 calId = {
                     id: res.calendar.id,
                     title: res.calendar.title
                 }
-                const date = { start: moment(res.startDate).add('09:00'), end: moment(res.endDate).add('09:00') }
+                delete res.calendar;
 
-
-                // setEventData({ ...eventData, startDate: date.start, endDate: date.end, recurrence: res.recurrence, id: route.params.eventId })
-                // setEventData({ ...eventData, ["startDate"]: date.start, ["endDate"]: date.end, ["recurrence"]: res.recurrence, ["id"]: route.params.eventId, ["allDay"]: res.allDay });
-
-                setIsAllDay(res.allDay)
-
-                if (res.startDate == null) {
-                    setShowTime({ start: ' ', end: res.endDate });
-                } else if (res.endDate == null) {
-                    setShowTime({ start: res.startDate, end: ' ' });
-                } else {
-                    setShowTime({ start: res.startDate, end: res.endDate });
+                // duration 없는 recurrence는 없어도 무관함
+                if (res.recurrenceRule != null) {
+                    if (res.recurrenceRule.duration == null) {
+                        delete res.recurrenceRule;
+                    }
                 }
-                setTitle(res.title);
-                setRecurrence(res.recurrence)
+                dispatch({ type: 'all', data: res });
+                console.log(res);
+                //recurrenceRule 데이터에서 endDate 추출 09/23
+                if (res.recurrenceRule != null) {   //recurrenceRule 존재여부 먼저 확인 안할시 duration 존재에 대해 promise경고
+                    if (res.recurrenceRule.duration != null) {
+                        const duration = res.recurrenceRule.duration
+                        console.log("recurrenceRule 확인됨")
+                        console.log(duration)
+                        if (duration == 'P1D') {
+                            dispatch({ type: 'endDate', data: res.startDate });
+                        } else {
+                            const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
+                            console.log(second)
+                            dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
+                        }
+                    }
+
+                }
+
 
                 const dateDif = res.alarms.map((i) => {
                     return moment(i.date).diff(res.startDate, 'minute');
@@ -99,65 +126,40 @@ export const eventSaveMain = ({ navigation, route }) => {
                 console.log(alarmData)
                 alarmSet(alarmData);
                 console.log(eventData);
-
+                setInitDate(true);
             }
+        } else {
+            setInitPicker(false);
         }
+
         if (calId.id != null) {
-            id = calId.id
-            // setEventData({ ...eventData, ["calendarId"]: calId.id })
             if (calId.title != null) {
-                // console.log(calId.title);
+                dispatch({ type: 'calendarId', data: calId.id })
                 setCalNameShow(<Text style={{ textAlign: 'right', marginVertical: 15, flex: 1 }}>{calId.title} 선택됨</Text>)
                 showToast(calId.title + "캘린더가 선택되었습니다.")
             }
         }
-        if (alarmData != '' && res == null) {
-            console.log('justalarm')
-            console.log(alarmData)
-            setEventData({ ...eventData, ["alarms"]: alarmData })
-        } else if (res != null) {
-            console.log('allEventData')
-            setEventData(
-                // ...eventData,
-                // ["alarms"]: alarmData,
-                // ["calendarId"]: calId.id,
-                // ["startDate"]: moment(res.startDate).add('09:00'),
-                // ["endDate"]: moment(res.endDate).add('09:00'),
-                // ["recurrence"]: res.recurrence,
-                // ["id"]: route.params.eventId,
-                // ["allDay"]: res.allDay
-                res
-            );
-        } else if (calId.id != null) {
-            setEventData({ ...eventData, ["calendarId"]: calId.id })
-            console.log('Tid')
-        }
-        console.log('effect')
-        console.log(eventData);
+
     }
 
     useEffect(async () => {
         init();
     }, [route.params])
 
+    // useEffect(() => {
+    //     console.log('changed eventData');
+    //     console.log(eventData)
 
-    useEffect(() => {
-        console.log('changed eventData');
-        console.log(eventData)
+    // }, [eventData])
 
-    }, [eventData])
-    useEffect(() => {
-        console.log('Isallday changed');
-        console.log(isAllDay)
-
-    }, [isAllDay])
 
 
     const alarmSet = (alarmDataParam) => {
 
         console.log(eventData.alarms)
         console.log(alarmDataParam)
-        alarmData = alarmDataParam
+
+        dispatch({ type: 'alarms', data: alarmDataParam })
         setAlarmShow(
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                 <Text style={{ textAlign: 'right', flex: 1 }}>
@@ -173,7 +175,18 @@ export const eventSaveMain = ({ navigation, route }) => {
                             case 1440:
                                 return '1일 전 '
                             default:
-                                return i.date + "분 전"
+                                const hour = i.date / 60
+                                const min = i.date % 60
+                                let res = ''
+                                if (hour != 0) {
+                                    res = hour + "시간 "
+                                }
+                                if (min != 0) {
+                                    res += min + '분 전'
+                                } else {
+                                    res += '전'
+                                }
+                                return res
                         }
                     })}
                 </Text>
@@ -181,48 +194,50 @@ export const eventSaveMain = ({ navigation, route }) => {
         )
     }
 
-    const [showTime, setShowTime] = useState({ start: eventData.startDate, end: eventData.endDate });
     const onChange = (event, selectedDate) => { //날짜선택시
         if (selectedDate != null) {
             const currentDate = selectedDate || date;
             //선택되는 시간은 GPT기준 한국시간으로 9시간 더해야함
             //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-            console.log(currentDate);
+            console.log(eventData);
             setShow(false);
             setDate(currentDate);
-            const forDate = moment(currentDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS');
-            const forDate2 = moment(currentDate).format('YYYY-MM-DDTHH:mm:ss.SSS');
-            if (isAllDay) { //allDay 선택시 시작날짜 및 종료날짜 00시00분00초로 동기화
+            const forDate = moment(currentDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
+            // if (eventData.allDay) { //allDay 선택시 시작날짜 및 종료날짜 00시00분00초로 동기화
 
-                isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });
-            } else if (mode === 'date') {
+            //     !initDate ? dispatch({ type: 'date', data: forDate + 'Z' }) :
+            //         isStart ? dispatch({ type: 'startDate', data: forDate + 'Z' }) : dispatch({ type: 'endDate', data: forDate + 'Z' });
+            //     console.log(eventData);
+            // } else 
+            if (mode === 'date') {
                 showMode('time');
                 //날짜 선택 완료시 시간선택모드로
             } else {
                 if (!initDate) {
-                    setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
-                    setShowTime({ start: forDate2, end: forDate2 });
+                    dispatch({ type: 'date', data: forDate });
                     setInitDate(true);
                 } else {
+                    let diffTime
                     if (isStart) {
-                        setEventData({ ...eventData, ["startDate"]: forDate + 'Z' })
-                        setShowTime({ ...showTime, start: forDate2 });
+                        dispatch({ type: 'startDate', data: forDate })
+                        const end = moment(eventData.endDate)
+                        diffTime = moment.duration(end.diff(moment(currentDate))).asSeconds(); // 시간차 사전 계산
                     } else {
-                        setEventData({ ...eventData, ["endDate"]: forDate + 'Z' })
-                        setShowTime({ ...showTime, end: forDate2 });
+                        dispatch({ type: 'endDate', data: forDate })
+                        const start = moment(eventData.startDate)
+                        diffTime = moment.duration(moment(currentDate).diff(start)).asSeconds(); // 시간차 사전 계산
+                    }
+
+                    // save용 recurrenceRule data 09/23
+                    if (eventData.recurrenceRule != null) {
+                        if (diffTime == 0) {
+                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P1D', fre: eventData.recurrence } })
+                        } else {
+                            console.log('dispatch')
+                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P' + Math.floor(diffTime) + 'S', fre: eventData.recurrence } })
+                        }
                     }
                 }
-
-                // if (isStart) { //시작 시간을 설정하였는가?
-                //     initDate ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
-                //         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
-                //     setInitDate(true);
-                // } else {//종료시간 선택
-                //     initDate ? setEventData({ ...eventData, ["endDate"]: forDate + 'Z' }) //initDate = false 가장 처음 선택시 시작 종료시간 동시설정
-                //         : setEventData({ ...eventData, ["startDate"]: forDate + 'Z', ["endDate"]: forDate + 'Z' });
-                //     setInitDate(true);
-                // }
-                // isStart ? setEventData({ ...eventData, ["startDate"]: forDate + 'Z' }) : setEventData({ ...eventData, ["endDate"]: forDate + 'Z' });  
             }
         } else { //선택된 데이터가 없을시 dateTimePicker 종료
             setShow(false);
@@ -240,14 +255,12 @@ export const eventSaveMain = ({ navigation, route }) => {
         showMode('date');
     };
 
+
     const onSaveEventHandle = async () => { //저장 기능
+
         Keyboard.dismiss() //키보드 사라지게함
-
-        console.log("*******************************")
-        console.log(eventData);
-
-
         const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
+
         if (eventTitle == null) {
             showToast('제목을 입력하세요!');
         } else if (route.params == null) {
@@ -256,6 +269,9 @@ export const eventSaveMain = ({ navigation, route }) => {
             showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
         }
         else {
+            if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
+                delete eventData.endDate
+            }
             console.log(eventData);
             const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
@@ -263,6 +279,19 @@ export const eventSaveMain = ({ navigation, route }) => {
                 navigation.navigate('Calendar Test');
             }, 1500);
         }
+
+        // const id = await RNCalendarEvents.saveEvent('recurrence testing', {
+        //     calendarId: 14,       //저장될 캘린더 ID
+        //     startDate: moment(date).subtract("07:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
+
+        //     allDay: false,
+        //     description: null,
+        //     recurrence: 'none', //반복
+        //     recurrenceRule: { endDate: moment(date).subtract("08:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', frequency: 'monthly' },
+        //     alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
+        // })
+        // showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+
     }
 
 
@@ -281,9 +310,9 @@ export const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(true)} >
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
-                            {isAllDay ?
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.start).format('MM월 DD일')}</Text> :
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.start).format('MM월 DD일  HH시 mm분')}</Text>}
+                            {eventData.allDay ?
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.startDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
 
@@ -291,16 +320,16 @@ export const eventSaveMain = ({ navigation, route }) => {
                     <TouchableOpacity onPress={() => showDatepicker(false)}>
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, }}>종료    </Text>
-                            {isAllDay ?
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.end).format('MM월 DD일')}</Text> :
-                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(showTime.end).format('MM월 DD일  HH시 mm분')}</Text>}
+                            {eventData.allDay ?
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일')}</Text> :
+                                <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
                     <View style={{ flexDirection: 'row' }}>
                         <CheckBox
-                            value={isAllDay}
+                            value={eventData.allDay}
                             disabled={false}
-                            onValueChange={(val) => { setIsAllDay(val); eventData.allDay = val; }}
+                            onValueChange={(val) => { dispatch({ type: 'allDay', data: val }) }}
                         />
                         <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
                     </View>
@@ -334,8 +363,22 @@ export const eventSaveMain = ({ navigation, route }) => {
 
                 </View>
                 <Picker
-                    selectedValue={recurrenceData}
-                    onValueChange={(item) => { setRecurrence(item); eventData.recurrence = item; }}>
+
+                    selectedValue={eventData.recurrence}
+                    onValueChange={(item) => {
+                        if (initPicker) {
+                            setInitPicker(false);
+                        } else {
+                            dispatch({ type: 'recurrence', data: item });
+                            if (eventData.recurrenceRule != null) {
+                                if (eventData.recurrenceRule.duration != null) {
+                                    dispatch({ type: 'recurrenceRule', data: { fre: item } });
+                                }
+                            }
+
+                            console.log(eventData);
+                        }
+                    }}>
                     <Picker.Item label="반복 없음" value="none" />
                     <Picker.Item label="매일 반복" value="daily" />
                     <Picker.Item label="매주 반복" value="weekly" />
@@ -448,10 +491,32 @@ const selectCal = ({ navigation }) => { //캘린더 선택 화면
 
 const alarmCal = ({ navigation, route }) => {   // 캘린더 알림 선택 화면
     const [alarmsParams, setAlarmsParams] = useState([]);   //알림 데이터
-    const [zero, setZero] = useState(false);
-    const [ten, setTen] = useState(false);
-    const [hour, setHour] = useState(false);
-    const [day, setDay] = useState(false);      //체크박스 선택 여부
+    // const [zero, setZero] = useState(false);
+    // const [ten, setTen] = useState(false);
+    // const [hour, setHour] = useState(false);
+    // const [day, setDay] = useState(false);      //체크박스 선택 여부
+    const reducer = (state, action) => {
+        switch (action.type) {
+            case 0:
+                return { ...state, 'zero': true }
+            case 10:
+                return { ...state, 'ten': true }
+            case 60:
+                return { ...state, 'hour': true }
+            case 1440:
+                return { ...state, 'day': true }
+            default:
+                break;
+        }
+    }
+
+
+    const [checkBool, dispatch] = useReducer(reducer, {
+        'zero': false,
+        'ten': false,
+        'hour': false,
+        'day': false
+    })
     useEffect(() => {
         init();
     }, [route])
@@ -461,20 +526,21 @@ const alarmCal = ({ navigation, route }) => {   // 캘린더 알림 선택 화�
         console.log(res);
         setAlarmsParams(res);   //알림설정 변경 시 기존에 선택했던 alarms 데이터를 route로 받아옴 
         res.map((i) => {        //switch 사용시 break 사용 주의
-            switch (i.date) {
-                case 0:
-                    setZero(true);
-                    break
-                case 10:
-                    setTen(true);
-                    break
-                case 60:
-                    setHour(true);
-                    break
-                case 1440:
-                    setDay(true);
-                    break
-            }
+            dispatch({ type: i.date })
+            // switch (i.date) {
+            //     case 0:
+            //         setZero(true);
+            //         break
+            //     case 10:
+            //         setTen(true);
+            //         break
+            //     case 60:
+            //         setHour(true);
+            //         break
+            //     case 1440:
+            //         setDay(true);
+            //         break
+            // }
         })
     }
     const setAlarms = (val, when) => {
@@ -491,30 +557,30 @@ const alarmCal = ({ navigation, route }) => {   // 캘린더 알림 선택 화�
             <View style={{ padding: 20 }}>
                 <View style={styles.checkStyle}>
                     <CheckBox
-                        value={zero}
+                        value={checkBool.zero}
                         disabled={false}
-                        onValueChange={(val) => { setZero(val); setAlarms(val, 0) }} />
+                        onValueChange={(val) => { dispatch({ type: 0 }); setAlarms(val, 0) }} />
                     <Text style={{ fontSize: 25 }}>일정 시작시간</Text>
                 </View>
                 <View style={styles.checkStyle}>
                     <CheckBox
-                        value={ten}
+                        value={checkBool.ten}
                         disabled={false}
-                        onValueChange={(val) => { setTen(val); setAlarms(val, 10) }} />
+                        onValueChange={(val) => { dispatch({ type: 10 }); setAlarms(val, 10) }} />
                     <Text style={{ fontSize: 25 }}>10분 전</Text>
                 </View>
                 <View style={styles.checkStyle}>
                     <CheckBox
-                        value={hour}
+                        value={checkBool.hour}
                         disabled={false}
-                        onValueChange={(val) => { setHour(val); setAlarms(val, 60) }} />
+                        onValueChange={(val) => { dispatch({ type: 60 }); setAlarms(val, 60) }} />
                     <Text style={{ fontSize: 25 }}>1시간 전</Text>
                 </View>
                 <View style={styles.checkStyle}>
                     <CheckBox
-                        value={day}
+                        value={checkBool.day}
                         disabled={false}
-                        onValueChange={(val) => { console.log(val); setDay(val); setAlarms(val, 1440) }} />
+                        onValueChange={(val) => { dispatch({ type: 1440 }); setAlarms(val, 1440) }} />
                     <Text style={{ fontSize: 25 }}>1일 전</Text>
                 </View>
                 <Button title="저장" onPress={() => { navigation.navigate('Save Event', { alarmsParams }) }} />

@@ -2,8 +2,7 @@ import React, { useCallback, useState, useRef, useEffect } from "react";
 import { View, Text, Switch, TouchableOpacity } from "react-native";
 import Toast from "react-native-easy-toast";
 import { useFocusEffect } from "@react-navigation/native";
-import calRemoveFunc from "./calRemoveFunc";
-import calFetchFunc from "./calFetchFunc";
+import * as calendarClass from './calendarClass'
 
 export default calendarFetchInterface = () => {
     const [active, setActive] = useState()
@@ -21,7 +20,7 @@ export default calendarFetchInterface = () => {
 
 
     const init = async () => {
-        const data = await calFetchFunc();
+        const data = await calendarClass.calFetchFunc();
         console.log(data.google)
         setActive(
             <View>
@@ -66,7 +65,7 @@ export default calendarFetchInterface = () => {
     }
     const remove = async (id) => {
         console.log('remove on')
-        await calRemoveFunc(id);
+        await calendarClass.calRemoveFunc(id);
         init();
     }
 

@@ -13,7 +13,11 @@ export default eventFetchFun = async (data) => {
     res.map((i) => {
         const date = moment(i.startDate).format('YYYY-MM-DD');
         const during = { start: i.startDate, end: i.endDate }
-        item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, 'alarms': i.alarms }]
+        if (item[date] != null) {
+            item[date] = [...item[date], { 'name': i.title, 'id': i.id, 'during': during, 'alarms': i.alarms }]
+        } else {
+            item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, 'alarms': i.alarms }]
+        }
     })
     // 아래는 Optional
     let beforeDate = data.start

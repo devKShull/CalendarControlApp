@@ -1,4 +1,3 @@
-import React from "react";
 import RNCalendarEvents from "react-native-calendar-events";
 
 export default createCalFunc = async (params) => {
@@ -19,9 +18,6 @@ export default createCalFunc = async (params) => {
     const id = await RNCalendarEvents.saveCalendar(calInfO)
     console.log(id);
     console.log("id");
-
-
-
 
     return id
 }
