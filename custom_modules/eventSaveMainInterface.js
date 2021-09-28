@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
-import RNCalendarEvents from 'react-native-calendar-events';
+import * as calendarClass from './calendarClass'
 import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
@@ -40,7 +40,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     }
     const [eventData, dispatch] = useReducer(eventReducer, {
         calendarId: null,       //저장될 캘린더 ID
-        startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간 //format 사용시 한글이 들어가게되면 자동으로 변환됨 -09:00 필요
+        startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간  -09:00 필요
         endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
@@ -78,7 +78,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             }
             //일정 수정을 위한 데이터 수신 및 적용
             if (route.params.eventId != null) {
-                const res = await RNCalendarEvents.findEventById(route.params.eventId)
+                const res = await calendarClass.eventFindId(route.params.eventId)
                 console.log(res);
                 setTitle(res.title);
                 calId = {
@@ -154,16 +154,16 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             case 1440:
                                 return '1일 전 '
                             default: // 알람데이터는 분단위로 저장되어 들어옴
-                                const hour = i.date / 60
+                                const hour = Math.floor(i.date / 60)
                                 const min = i.date % 60
                                 let res = ''
                                 if (hour != 0) {
                                     res = hour + "시간 "
                                 }
                                 if (min != 0) {
-                                    res += min + '분 전'
+                                    res += min + '분 전 '
                                 } else {
-                                    res += '전'
+                                    res += '전 '
                                 }
                                 return res
                         }
@@ -246,10 +246,10 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
                 delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
             }
-            const id = await RNCalendarEvents.saveEvent(eventTitle, eventData)
+            const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
             showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
             setTimeout(() => {
-                navigation.navigate('Calendar');
+                navigation.navigate('Agenda Calendar');
             }, 1500);
         }
     }
@@ -299,7 +299,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         onChange={onChange}
                     />
                 )}
-                <TextInput placeholder={"메모"} style={{ fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
+                <TextInput value={eventData.description} placeholder={"메모"} style={{ fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
 
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1 }}>

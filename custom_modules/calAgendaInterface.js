@@ -8,8 +8,7 @@ import { Agenda } from 'react-native-calendars';
 
 export default calAgendaInterface = ({ navigation }) => {
     const [items, setItems] = useState({});
-    const [fin, setFin] = useState(false); // Loading 상태 state
-    const [fetchData, setFetchData] = useState({ start: '2020-12-01T00:00:00.000Z', end: '2021-10-30T19:26:00.000Z' }) // data fetch 범위
+    const [changedDate, setChangedDate] = useState(new Date());
     const check = async () => { //권한 체크
         const res = await calendarClass.permissionCheck() // authorized => 허용, restricted, denied => 거부
         if (res == 'authorized') {
@@ -17,11 +16,14 @@ export default calAgendaInterface = ({ navigation }) => {
         }
     }
 
-    const fetchF = async () => {
-        setFin(false); // 데이터 불러올때까지 spinner 작동
-        const res = await calendarClass.eventFetchFunc(fetchData)
+    const fetchF = async (fetchDate = {
+        start: moment(changedDate).subtract(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+        end: moment(changedDate).add(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
+    }) => {
+
+        const res = await calendarClass.eventFetchFunc(fetchDate)
         setItems(res);
-        setFin(true);
+
     }
 
     useEffect(() => { // 초기 셋팅
@@ -43,7 +45,7 @@ export default calAgendaInterface = ({ navigation }) => {
         console.log(items[itemIndex])
         const resBool = await calendarClass.eventRemoveFunc(id);
         console.log(resBool) // true or false
-        // fetchF();
+        fetchF();
     }
 
     const renderItem = (item) => { //아이템 렌더링
@@ -77,28 +79,35 @@ export default calAgendaInterface = ({ navigation }) => {
         );
     }
 
-    const loadItems = (day) => { // 스크롤 시 작동하는 함수 인것같음 좀더 확인 필요
-        console.log(day);
-        const loadDate = moment(day.dateString).format('YYYY-MM-01')
-        console.log(loadDate)
+    const loadItems = (month) => { // 스크롤 시 작동하는 함수 
+        console.log(month);
+        const after = moment(changedDate).add(5, 'month')
+        const before = moment(changedDate).subtract(5, 'month')
+        console.log(changedDate);
+        if (moment(month.dateString).isBefore(before) || moment(month.dateString).isAfter(after)) {
+            console.log('loadDate on');
+            const loadDate = {
+                start: moment(month.dateString).subtract(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z',
+                end: moment(month.dateString).add(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z'
+            }
+            fetchF(loadDate);
+            setChangedDate(month.dateString);
+        }
+
     }
 
     return (
         <View style={{ height: '90%' }}>
-            {fin ?
-                <Agenda
-                    items={items}
-                    renderItem={renderItem}
-                    renderEmptyDate={renderEmptyDate}
-                    // hideKnob={true}
-                    pastScrollRange={100}
-                    futureScrollRange={100}
-                    minDate={moment(fetchData.start).format('YYYY-MM-DD')}
-                    maxDate={moment(fetchData.end).format('YYYY-MM-DD')}
-                    loadItemsForMonth={loadItems}
-                />
-                : <ActivityIndicator size="large" />
-            }
+            <Agenda
+                items={items}
+                renderItem={renderItem}
+                renderEmptyDate={renderEmptyDate}
+                // hideKnob={true}
+                pastScrollRange={100}
+                futureScrollRange={100}
+                loadItemsForMonth={loadItems}
+            />
+
             <Button
                 onPress={() => { fetchF() }}
                 title="새로고침"

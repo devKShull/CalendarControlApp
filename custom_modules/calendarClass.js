@@ -4,13 +4,15 @@ import moment from 'moment';
 
 // 권한 체크 함수 authorized 가 아닐시 권한 요청
 export async function permissionCheck() {
-    console.log("check func On")
-    let res = await RNCalendarEvents.checkPermissions((readOnly = false))
-    console.log(res);
-    if (res != 'authorized') {
-        await RNCalendarEvents.requestPermissions((readOnly = false))
+    while (true) {
+        console.log("check func On")
+        let res = await RNCalendarEvents.checkPermissions((readOnly = false))
+        console.log(res);
+        if (res != 'authorized') {
+            await RNCalendarEvents.requestPermissions((readOnly = false))
+        }
+        else { return res } // res authorized denied restricted
     }
-    else { return res }
 }
 // 캘린더 생성 함수 params = {title, name} 
 export async function calCreateFunc(params) {
@@ -37,7 +39,7 @@ export async function calCreateFunc(params) {
 // 캘린더 삭제 함수
 export async function calRemoveFunc(id) {
     const res = await RNCalendarEvents.removeCalendar(id)
-    return res
+    return res // bool true or false
 }
 // 캘린더 조회 함수
 export async function calFetchFunc() {
@@ -53,8 +55,34 @@ export async function calFetchFunc() {
     })
     const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData }
     return parsingRes
-}
+    // parsingRes = { 리턴 데이터
+    //     google: [{
+    //         "allowedAvailabilities": ["busy", "free"],
+    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
+    //         "source": "~~~@gmail.com", "title": "대한민국의 휴일", "type": "com.google"
+    //     }, ....],
+    //     local: [{
+    //         "allowedAvailabilities": ["busy", "free"],
+    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
+    //         "source": "~~~@gmail.com", "title": "", "type": "LOCAL"
+    //     }],
+    //     samsung: [{
+    //         "allowedAvailabilities": ["busy", "free"],
+    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
+    //         "source": "~~~@gmail.com", "title": "", "type": ""
+    //     }]
+    // }
 
+}
+export async function eventSaveFunc(eventTitle, eventData) {
+    const res = RNCalendarEvents.saveEvent(eventTitle, eventData)
+    return res;
+}
+export async function eventFindId(id) {
+    const res = RNCalendarEvents.findEventById(id)
+
+    return res;
+}
 export async function eventFetchFunc(data) {
     // 입력 데이터 양식
     // data = {
@@ -68,10 +96,11 @@ export async function eventFetchFunc(data) {
         const date = moment(i.startDate).format('YYYY-MM-DD');
         const during = { start: i.startDate, end: i.endDate }
         if (item[date] != null) {
-            item[date] = [...item[date], { 'name': i.title, 'id': i.id, 'during': during, 'alarms': i.alarms }]
+            item[date] = [...item[date], { 'name': i.title, 'id': i.id, 'during': during }]
         } else {
-            item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, 'alarms': i.alarms }]
+            item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, }] //alarms : i.alarms 삭제
         }
+
     })
     // 아래는 Optional 일정이 없는 날짜에 빈 배열 추가
     let beforeDate = data.start
@@ -88,6 +117,7 @@ export async function eventFetchFunc(data) {
     }
 
     return item
+    // Ex) item = {date:[{name:'타이틀', id: '이벤트 id', during: {start: '시작시간', end: '종료시간'},}, {..} ], ......}
 }
 
 export async function eventRemoveFunc(id) {
