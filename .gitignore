@@ -56,7 +56,7 @@ buck-out/
 *.jsbundle
 
 # CocoaPods
-/ios/Pods/
+
 android/build.gradle
 android/gradle.properties
 android/gradlew
@@ -87,7 +87,7 @@ android/app/src/main/res/values/styles.xml
 android/gradle/wrapper/gradle-wrapper.jar
 android/gradle/wrapper/gradle-wrapper.properties
 __tests__/App-test.js
-ios/Podfile
+
 ios/sample3/AppDelegate.h
 ios/sample3/AppDelegate.m
 ios/sample3/Info.plist
