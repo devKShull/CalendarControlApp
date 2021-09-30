@@ -1,4 +1,4 @@
-import { View, Text, Button, StyleSheet, Keyboard } from 'react-native'
+import { View, Text, Button, StyleSheet, Keyboard, Platform } from 'react-native'
 import React, { useState, useRef, useEffect, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -60,7 +60,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const [calNameShow, setCalNameShow] = useState(); // 선택한 캘린더의 title 을 표시하기우한 component state
     const [initPicker, setInitPicker] = useState(true);
     // 이벤트 수정시 받아온데이터에서 picker의 value 인 recurrence가 있을때 bug로 value 와 onValueChange 의 item 이 동기화되지않는것을 방지
-
+    const [saveState, setSaveState] = useState(false)
 
 
     const init = async () => {
@@ -178,7 +178,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             const currentDate = selectedDate || date;
             //선택되는 시간은 GPT기준 한국시간으로 9시간 더해야함
             //날짜선택이 취소되었을 경우 date(오늘날짜) 가 들어감
-            setShow(false);
+            setShow(Platform.OS === 'ios');
             setDate(currentDate);
             const forDate = moment(currentDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z';
             // if (eventData.allDay) { //allDay 선택시 시작날짜 및 종료날짜 00시00분00초로 동기화
@@ -187,10 +187,11 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             //         isStart ? dispatch({ type: 'startDate', data: forDate + 'Z' }) : dispatch({ type: 'endDate', data: forDate + 'Z' });
             //     console.log(eventData);
             // } else 
-            if (mode === 'date') {
+            if (mode === 'date' && !eventData.allDay) {
                 showMode('time');
                 //날짜 선택 완료시 시간선택모드로
             } else {
+                eventData.allDay && setShow(false);
                 if (!initDate) {
                     dispatch({ type: 'date', data: forDate });
                     setInitDate(true);
@@ -234,24 +235,29 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
 
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
-        const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
-        if (eventTitle == null) {
-            showToast('제목을 입력하세요!');
-        } else if (route.params == null) {
-            showToast('캘린더를 선택하세요');
-        } else if (eventData.startDate != eventData.endDate && !dateWarning) {
-            showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
-        }
-        else {
-            if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
-                delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
+        if (!saveState) {
+            setSaveState(true);
+            const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
+            if (eventTitle == null) {
+                showToast('제목을 입력하세요!');
+            } else if (route.params == null) {
+                showToast('캘린더를 선택하세요');
+            } else if (eventData.startDate != eventData.endDate && !dateWarning) {
+                showToast('시작날짜가 종료날짜보다 뒤일 수 없습니다.')
             }
-            const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
-            showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
-            setTimeout(() => {
-                navigation.navigate('Agenda Calendar');
-            }, 1500);
+            else {
+                if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
+                    delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
+                }
+                const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
+                showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+                setTimeout(() => {
+                    navigation.navigate('Agenda Calendar');
+                    setSaveState(false);
+                }, 1500);
+            }
         }
+
     }
     const toastRef = useRef();
     const showToast = (txt) => {
@@ -295,7 +301,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         value={date}
                         mode={mode}
                         is24Hour={true}
-                        display="default"
+                        display={Platform.OS === 'ios' ? 'inline' : "default"}
                         onChange={onChange}
                     />
                 )}

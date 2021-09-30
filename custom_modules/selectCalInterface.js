@@ -45,7 +45,17 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
                         </TouchableOpacity>
                     )
                 })}
-                {(data.google == '' && data.local == '' && data.samsung == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
+                {data.others != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Other Calendars</Text>}
+                {data.others.map((i, key) => {
+                    return (
+                        <TouchableOpacity key={key} onPress={() => {
+                            selectedCal(i.id, i.title)
+                        }}>
+                            <Text>{i.title}</Text>
+                        </TouchableOpacity>
+                    )
+                })}
+                {(data.google == '' && data.local == '' && data.samsung == '', data.others == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
             </View>
         )
     }

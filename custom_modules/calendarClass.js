@@ -29,6 +29,7 @@ export async function calCreateFunc(params) {
         accessLevel: 'editor',
         allowedAvailabilities: ['busy', 'free'],
         ownerAccount: 'LOCAL',
+        entityType: 'event',
     }
     const id = await RNCalendarEvents.saveCalendar(calInfO)
     console.log(id);
@@ -48,12 +49,15 @@ export async function calFetchFunc() {
         return (i.type === ('com.google'))
     });
     const localCalData = res.filter((i) => { //로컬 캘린더 필터링
-        return (i.type === ('LOCAL'))
+        return (i.type === ('LOCAL') || i.source === ('Default'))
     })
     const samCalData = res.filter((i) => {//삼성 캘린더 필터링
         return (i.type === ('com.osp.app.signin'))
     })
-    const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData }
+    const otherCalendars = res.filter((i) => {//삼성 캘린더 필터링
+        return (i.source === ('Other'))
+    })
+    const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars }
     return parsingRes
     // parsingRes = { 리턴 데이터
     //     google: [{
@@ -121,7 +125,7 @@ export async function eventFetchFunc(data) {
 }
 
 export async function eventRemoveFunc(id) {
-    const res = await RNCalendarEvents.removeEvent(id)
+    const res = await RNCalendarEvents.removeEvent(id, { futureEvents: true })
     return res
 }
 
