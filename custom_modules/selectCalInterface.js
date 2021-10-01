@@ -55,7 +55,7 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
                         </TouchableOpacity>
                     )
                 })}
-                {(data.google == '' && data.local == '' && data.samsung == '', data.others == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
+                {(data.google == '' && data.local == '' && data.samsung == '' && data.others == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
             </View>
         )
     }

@@ -5,6 +5,7 @@ import { View, Text } from 'react-native';
 import calAgendaInterface from './calAgendaInterface';
 import calFetchInterface from './calFetchInterface';
 import calCreateInterface from './calCreateInterface';
+import devMode from './devMode';
 
 const CustomDrawer = (props) => {
     return (
@@ -25,6 +26,7 @@ export default Home = () => {
             <Drawer.Screen name='Agenda Calendar' component={calAgendaInterface} />
             <Drawer.Screen name='Calendar List' component={calFetchInterface} />
             <Drawer.Screen name='Create Cal' component={calCreateInterface} />
+            <Drawer.Screen name='Develop mode' component={devMode} />
         </Drawer.Navigator>
     );
 }

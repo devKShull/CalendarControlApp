@@ -1,4 +1,4 @@
-import { View, Text, Button, StyleSheet, Keyboard, Platform } from 'react-native'
+import { View, Text, Button, StyleSheet, Keyboard, Platform, Modal } from 'react-native'
 import React, { useState, useRef, useEffect, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -61,9 +61,10 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const [initPicker, setInitPicker] = useState(true);
     // 이벤트 수정시 받아온데이터에서 picker의 value 인 recurrence가 있을때 bug로 value 와 onValueChange 의 item 이 동기화되지않는것을 방지
     const [saveState, setSaveState] = useState(false)
-
-
+    const [isException, setIsException] = useState(false);
+    const [isModalVisible, setModalVisible] = useState(false);
     const init = async () => {
+
         if (route.params != null) {
             // route.params 가 null일 경우 .id 혹은 다른 데이터들이 undefined로 나타나기 때문에 먼저 params 검증부터함
             if (route.params.id != null) {
@@ -86,20 +87,18 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     title: res.calendar.title
                 }
                 delete res.calendar; // 이벤트 저장시 캘린더에 대한 내용은 calendarId만 있으면됨
-                // duration 없는 recurrenceRule는 없어도 무관함
-                //  RecurrenceRule이 존재할시 endDate를 삭제해야 하기 때문에 duration 없을시 recurrenceRule을 삭제(recurrence 가 있으면 자동으로 생성됨)
-                if (res.recurrenceRule != null) {
-                    if (res.recurrenceRule.duration == null) {
-                        delete res.recurrenceRule;
-                    }
-                }
+
                 dispatch({ type: 'all', data: res });
                 //recurrenceRule 데이터에서 endDate 추출 09/23
+                if (!(res.recurrence == null || res.recurrence == 'none')) {
+                    setIsException(true);
+                }
                 if (res.recurrenceRule != null) {   //recurrenceRule 존재여부 먼저 확인 안할시 duration 존재에 대해 promise경고
                     if (res.recurrenceRule.duration != null) {
                         const duration = res.recurrenceRule.duration
                         console.log("recurrenceRule 확인됨")
                         console.log(duration)
+                        //exception 날짜를 지정하기위함
                         if (duration == 'P1D') {
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
                         } else {
@@ -107,6 +106,10 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             console.log(second)
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
                         }
+                    } else {
+                        delete res.recurrenceRule;
+                        // duration 없는 recurrenceRule는 없어도 무관함
+                        //  RecurrenceRule이 존재할시 endDate를 삭제해야 하기 때문에 duration 없을시 recurrenceRule을 삭제(recurrence 가 있으면 자동으로 생성됨)
                     }
                 }
 
@@ -191,6 +194,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 showMode('time');
                 //날짜 선택 완료시 시간선택모드로
             } else {
+                let diffTime;
                 eventData.allDay && setShow(false);
                 if (!initDate) {
                     dispatch({ type: 'date', data: forDate });
@@ -236,7 +240,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
         if (!saveState) {
-            setSaveState(true);
+
             const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
             if (eventTitle == null) {
                 showToast('제목을 입력하세요!');
@@ -249,15 +253,39 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
                     delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
                 }
-                const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
-                showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
-                setTimeout(() => {
-                    navigation.navigate('Agenda Calendar');
-                    setSaveState(false);
-                }, 1500);
+                if (isException) {
+                    setModalVisible(true);
+                } else {
+                    setSaveState(true);
+                    const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
+                    showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+                    setTimeout(() => {
+                        navigation.navigate('Agenda Calendar');
+                        setSaveState(false);
+                    }, 1500);
+                }
             }
         }
 
+    }
+    const saveInModal = async (isExcept) => {
+        if (isExcept) {
+            const id = await calendarClass.eventSaveFunc(eventTitle, eventData, eventData.startDate)
+            setModalVisible(false);
+            showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+            setTimeout(() => {
+                navigation.navigate('Agenda Calendar');
+                setSaveState(false);
+            }, 1500);
+        } else {
+            const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
+            setModalVisible(false);
+            showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
+            setTimeout(() => {
+                navigation.navigate('Agenda Calendar');
+                setSaveState(false);
+            }, 1500);
+        }
     }
     const toastRef = useRef();
     const showToast = (txt) => {
@@ -346,6 +374,15 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     fadeOutDuration={1000}
                     style={{ backgroundColor: 'rgba(33, 87 ,243, 0.5)' }}
                 />
+                {isModalVisible && <Modal>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text>이 일정만 수정할 것인가요?</Text>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Button onPress={() => saveInModal(true)} title="이 날짜의 일정만"></Button>
+                            <Button onPress={() => saveInModal(false)} title="연관된 모든 날짜"></Button>
+                        </View>
+                    </View>
+                </Modal>}
             </View>
         </View>
     )

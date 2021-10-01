@@ -78,12 +78,24 @@ export async function calFetchFunc() {
     // }
 
 }
-export async function eventSaveFunc(eventTitle, eventData) {
-    const res = RNCalendarEvents.saveEvent(eventTitle, eventData)
+export async function eventSaveFunc(eventTitle, eventData, exception = null) {
+    console.log('//////////////////////////')
+    console.log(eventData);
+    console.log(exception);
+    //  { exceptionDate: exception, futureEvents: false }
+    let res;
+    if (exception == null) {
+        res = await RNCalendarEvents.saveEvent(eventTitle, eventData)
+    } else {
+        res = await RNCalendarEvents.saveEvent(eventTitle, eventData, { exceptionDate: exception, futureEvents: false })
+    }
+    const te = await RNCalendarEvents.findEventById(res)
+    console.log(te);
+    console.log(res);
     return res;
 }
 export async function eventFindId(id) {
-    const res = RNCalendarEvents.findEventById(id)
+    const res = await RNCalendarEvents.findEventById(id)
 
     return res;
 }

@@ -20,7 +20,7 @@ export default calAgendaInterface = ({ navigation }) => {
         start: moment(changedDate).subtract(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
         end: moment(changedDate).add(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
     }) => {
-
+        console.log('fetch ons')
         const res = await calendarClass.eventFetchFunc(fetchDate)
         setItems(res);
 
