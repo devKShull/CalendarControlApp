@@ -1,4 +1,4 @@
-import RNCalendarEvents from "react-native-calendar-events";
+import RNCalendarEvents from "../cal";
 import moment from 'moment';
 
 
@@ -141,3 +141,27 @@ export async function eventRemoveFunc(id) {
     return res
 }
 
+
+
+// //IOS
+// {"alarms": [{"date": "2019-10-01T00:10:00.000Z"}], 
+// "allDay": true, 
+// "startDate": "2019-10-02T15:00:00.000Z",  
+// "endDate": "2019-10-03T14:59:59.000Z",
+// "id": "6FBCD7D8-1493-491B-A9D3-5E1B54E8F640", 
+// "notes": "일정에 대한 설명", 
+// "occurrenceDate": "2019-10-02T15:00:00.000Z", 
+// "recurrenceRule": {"frequency": "yearly", "interval": 1, "occurrence": 5, 'duration': 'weekly', 'endDate':'2019-10-03T14:59:59.000Z'}, 
+// "title": "개천절", 
+// }
+
+// //ANDROID
+// {"alarms": [{"date": "2019-10-13T00:10:00.000Z"}], 
+// "allDay": true, 
+// "description": "일정 설명", 
+// "endDate": "", 
+// "id": "144", 
+// "recurrenceRule": {"duration": "P1D", "frequency": "yearly", "interval": 1, "occurrence": 5,'endDate':'2019-10-03T14:59:59.000Z'}, 
+// "startDate": "2019-10-13T00:00:00.000Z", 
+// "title": "혁규 생일"
+// }

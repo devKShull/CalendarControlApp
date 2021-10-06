@@ -1,4 +1,5 @@
-import { View, Text, Button, StyleSheet, Keyboard, Platform, Modal } from 'react-native'
+import { View, Text, Button, StyleSheet, Keyboard, Platform } from 'react-native'
+import Modal from 'react-native-modal'
 import React, { useState, useRef, useEffect, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -7,6 +8,7 @@ import * as calendarClass from './calendarClass'
 import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
+import RadioForm from 'react-native-simple-radio-button'
 
 
 export default eventSaveMainInterface = ({ navigation, route }) => {
@@ -32,8 +34,17 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 return action.data
             case 'date':
                 return { ...state, startDate: action.data, endDate: action.data }
-            case 'recurrenceRule':
-                return { ...state, recurrenceRule: { duration: action.data.dur, frequency: action.data.fre } }
+            //아래는 recurrenceRule
+            case 'duration':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, duration: action.data } }
+            case 'frequency':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, frequency: action.data } }
+            case 'interval':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, interval: action.data } }
+            case 'occurrence':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, occurrence: action.data } }
+            case 'recurrenceEndDate':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, endDate: action.data } }
             default:
                 break;
         }
@@ -44,8 +55,8 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
-        recurrence: 'none', //반복
-        alarms: [] //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
+        alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
+        recurrenceRule: { frequency: 'none' }
     })
     let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
     let alarmData = []; //알람데이터 저장용
@@ -63,6 +74,9 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const [saveState, setSaveState] = useState(false)
     const [isException, setIsException] = useState(false);
     const [isModalVisible, setModalVisible] = useState(false);
+    const [recurModalVisible, setRecurModal] = useState(false);
+    const [recShow, setRecShow] = useState()
+
     const init = async () => {
 
         if (route.params != null) {
@@ -87,18 +101,17 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     title: res.calendar.title
                 }
                 delete res.calendar; // 이벤트 저장시 캘린더에 대한 내용은 calendarId만 있으면됨
-
+                delete res.recurrence // recurrence 설정은 recurrenceRule 로 대체한다 10/01
                 dispatch({ type: 'all', data: res });
                 //recurrenceRule 데이터에서 endDate 추출 09/23
-                if (!(res.recurrence == null || res.recurrence == 'none')) {
-                    setIsException(true);
-                }
                 if (res.recurrenceRule != null) {   //recurrenceRule 존재여부 먼저 확인 안할시 duration 존재에 대해 promise경고
                     if (res.recurrenceRule.duration != null) {
                         const duration = res.recurrenceRule.duration
                         console.log("recurrenceRule 확인됨")
                         console.log(duration)
-                        //exception 날짜를 지정하기위함
+                        if (!(res.recurrenceRule.frequency == null || res.recurrenceRule.frequency == 'none')) {
+                            setIsException(true);
+                        } //exception 날짜를 지정하기위함
                         if (duration == 'P1D') {
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
                         } else {
@@ -106,11 +119,12 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             console.log(second)
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
                         }
-                    } else {
-                        delete res.recurrenceRule;
-                        // duration 없는 recurrenceRule는 없어도 무관함
-                        //  RecurrenceRule이 존재할시 endDate를 삭제해야 하기 때문에 duration 없을시 recurrenceRule을 삭제(recurrence 가 있으면 자동으로 생성됨)
                     }
+                    // else {
+                    //     delete res.recurrenceRule;
+                    //     // duration 없는 recurrenceRule는 없어도 무관함
+                    //     //  RecurrenceRule이 존재할시 endDate를 삭제해야 하기 때문에 duration 없을시 recurrenceRule을 삭제(recurrence 가 있으면 자동으로 생성됨)
+                    // }
                 }
 
                 // 알람 데이터는 수신시 날짜형식으로 수신함 minute 단위로 parsing
@@ -213,10 +227,9 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     // save용 recurrenceRule data 09/23
                     if (eventData.recurrenceRule != null) {
                         if (diffTime == 0) {
-                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P1D', fre: eventData.recurrence } })
+                            dispatch({ 'type': 'duration', 'data': 'P1D' })
                         } else {
-                            console.log('dispatch')
-                            dispatch({ 'type': 'recurrenceRule', 'data': { dur: 'P' + Math.floor(diffTime) + 'S', fre: eventData.recurrence } })
+                            dispatch({ 'type': 'duration', 'data': 'P' + Math.floor(diffTime) + 'S' })
                         }
                     }
                 }
@@ -287,6 +300,33 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             }, 1500);
         }
     }
+    const recurrenceShow = (val) => {
+        let txt
+        switch (val) {
+            case 'none':
+                txt = '반복 없음'
+                break;
+            case 'daily':
+                txt = '매일 반복'
+                break;
+            case 'weekly':
+                txt = '주간 반복'
+                break;
+            case 'monthly':
+                txt = '월간 반복'
+                break;
+            case 'yearly':
+                txt = '년간 반복'
+                break;
+        }
+        setRecShow(
+
+            <Text style={{ textAlign: 'right', flex: 1 }}>
+                {txt}
+            </Text>
+
+        )
+    }
     const toastRef = useRef();
     const showToast = (txt) => {
         toastRef.current.show(txt, 2000);
@@ -342,10 +382,14 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     </View>
                 </TouchableOpacity>
                 <View style={{ height: 50 }}>
-                    <TouchableOpacity onPress={() => { navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}><View style={{ flexDirection: 'row', flex: 1 }}><Text style={styles.touchText}>알림</Text>
-                        {alarmShow}</View></TouchableOpacity>
+                    <TouchableOpacity onPress={() => { navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}>
+                        <View style={{ flexDirection: 'row', flex: 1 }}>
+                            <Text style={styles.touchText}>알림</Text>
+                            {alarmShow}
+                        </View>
+                    </TouchableOpacity>
                 </View>
-                <Picker
+                {/* <Picker
                     selectedValue={eventData.recurrence}
                     onValueChange={(item) => {
                         if (initPicker) {
@@ -364,7 +408,13 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     <Picker.Item label="매주 반복" value="weekly" />
                     <Picker.Item label="매월 반복" value="monthly" />
                     <Picker.Item label="매년 반복" value="yearly" />
-                </Picker>
+                </Picker> */}
+                <TouchableOpacity onPress={() => { setRecurModal(true); }} style={{ height: 50 }}>
+                    <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
+                        <Text style={{ flex: 1 }}>반복</Text>
+                        {recShow}
+                    </View>
+                </TouchableOpacity>
                 <View>
                     <Button onPress={() => { onSaveEventHandle() }} title={"저장"}></Button>
                 </View>
@@ -374,7 +424,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     fadeOutDuration={1000}
                     style={{ backgroundColor: 'rgba(33, 87 ,243, 0.5)' }}
                 />
-                {isModalVisible && <Modal>
+                <Modal isVisible={isModalVisible}>
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                         <Text>이 일정만 수정할 것인가요?</Text>
                         <View style={{ flexDirection: 'row' }}>
@@ -382,7 +432,48 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             <Button onPress={() => saveInModal(false)} title="연관된 모든 날짜"></Button>
                         </View>
                     </View>
-                </Modal>}
+                </Modal>
+
+                <Modal isVisible={recurModalVisible}>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
+                        <RadioForm
+                            radio_props={
+                                [
+                                    { label: '반복없음', value: 'none' },
+                                    { label: '매일반복', value: 'daily' },
+                                    { label: '매주반복', value: 'weekly' },
+                                    { label: '매월반복', value: 'monthly' },
+                                    { label: '매년반복', value: 'yearly' }
+                                ]
+                            }
+
+                            onPress={(val) => { dispatch({ 'type': 'frequency', 'data': val }); recurrenceShow(val); console.log(eventData) }}
+                        />
+
+                        <View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text>반복횟수 </Text>
+                                <TextInput
+
+                                    keyboardType='numeric'
+                                    onChangeText={(txt) => dispatch({ type: 'occurrence', data: parseInt(txt) })}
+                                />
+                                <Text>번 반복</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <TextInput
+
+                                    keyboardType='numeric'
+                                    onChangeText={(txt) => dispatch({ type: 'interval', data: parseInt(txt) })}
+                                />
+                                <Text>주기로 반복</Text>
+                            </View>
+                        </View>
+
+                        <Button title="저장" onPress={() => { console.log(eventData.recurrenceRule.frequency); console.log(eventData.recurrenceRule); setRecurModal(false) }} />
+                    </View>
+                </Modal>
+
             </View>
         </View>
     )
