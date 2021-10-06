@@ -1,4 +1,4 @@
-package com.calendarevents;
+package com.sample3;
 
 import android.app.Activity;
 import android.content.ContentResolver;
