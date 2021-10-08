@@ -1,4 +1,4 @@
-import { View, Text, Button, StyleSheet, Keyboard, Platform } from 'react-native'
+import { View, Text, Button, StyleSheet, Keyboard, Platform, ScrollView } from 'react-native'
 import Modal from 'react-native-modal'
 import React, { useState, useRef, useEffect, useReducer } from 'react'
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler'
@@ -56,7 +56,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         allDay: false,
         description: null,
         alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
-        recurrenceRule: { frequency: 'none' }
+        recurrenceRule: { frequency: 'none', duration: 'PT0H' }
     })
     let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
     let alarmData = []; //알람데이터 저장용
@@ -114,10 +114,14 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         } //exception 날짜를 지정하기위함
                         if (duration == 'P1D') {
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
-                        } else {
+                        } else if (duration.indexOf('S') != -1) {
                             const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
                             console.log(second)
                             dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
+                        } else if (duration.indexOf('H') != -1) {
+                            const hour = duration.substring(duration.indexOf('T') + 1, duration.indexOf('H'))
+                            console.log(hour)
+                            dispatch({ type: 'endDate', data: moment(res.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
                         }
                     }
                     // else {
@@ -264,12 +268,20 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
             }
             else {
                 if (eventData.recurrenceRule != null) { //recurrenceRule 검증 endDate 삭제 09/23
-                    delete eventData.endDate //recurrenceRule 존재시 endDate 삭제
+                    if (Platform.OS === 'android') {
+                        if (eventData.recurrenceRule.frequency == 'none') {
+                            delete eventData.recurrenceRule //recurrenceRule의 frequency가 none 인경우 => 반복아님 recurrenceRule 삭제
+                        } else {
+                            delete eventData.endDate //recurrenceRule 의 frequency 가 none이 아닌경우 => 반복인경우 endDate 삭제
+                        }
+                    }
                 }
                 if (isException) {
                     setModalVisible(true);
                 } else {
                     setSaveState(true);
+                    console.log('//////////////////////////////////')
+                    console.log(eventData)
                     const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
                     showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
                     setTimeout(() => {
@@ -330,6 +342,31 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const toastRef = useRef();
     const showToast = (txt) => {
         toastRef.current.show(txt, 2000);
+    }
+    const RecView = () => {
+        let txt;
+        if (eventData.recurrenceRule != null) {
+            txt = eventData.recurrenceRule.frequency;
+            if (eventData.recurrenceRule.interval != null) {
+                txt += ', interval: ' + eventData.recurrenceRule.interval;
+            }
+            if (eventData.recurrenceRule.occurrence != null) {
+                txt += ', occurence: ' + eventData.recurrenceRule.occurrence;
+            }
+        }
+        return (
+            <Text>{txt}</Text>
+        )
+    }
+    const initModal = () => {
+        dispatch({ type: 'frequency', data: 'none' });
+        dispatch({ type: 'duration', data: 'PT0H' });
+        if (eventData.recurrenceRule.interval != null) {
+            delete eventData.recurrenceRule.interval
+        }
+        if (eventData.recurrenceRule.occurrence != null) {
+            delete eventData.recurrenceRule.occurrence
+        }
     }
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
@@ -412,7 +449,8 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 <TouchableOpacity onPress={() => { setRecurModal(true); }} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
                         <Text style={{ flex: 1 }}>반복</Text>
-                        {recShow}
+                        {/* {recShow} */}
+                        <RecView />
                     </View>
                 </TouchableOpacity>
                 <View>
@@ -425,6 +463,8 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     style={{ backgroundColor: 'rgba(33, 87 ,243, 0.5)' }}
                 />
                 <Modal isVisible={isModalVisible}>
+
+
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                         <Text>이 일정만 수정할 것인가요?</Text>
                         <View style={{ flexDirection: 'row' }}>
@@ -435,6 +475,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 </Modal>
 
                 <Modal isVisible={recurModalVisible}>
+
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
                         <RadioForm
                             radio_props={
@@ -468,10 +509,22 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                                 />
                                 <Text>주기로 반복</Text>
                             </View>
+                            <Text>반복종료날짜 설정</Text>
+                            {/* <DateTimePicker
+                                    testID="dateTimePicker"
+                                    value={date}
+                                    mode={'date'}
+                                    is24Hour={true}
+                                    display={Platform.OS === 'ios' ? 'inline' : "default"}
+                                    onChange={onChange}
+                                /> */}
                         </View>
 
-                        <Button title="저장" onPress={() => { console.log(eventData.recurrenceRule.frequency); console.log(eventData.recurrenceRule); setRecurModal(false) }} />
+                        <Button title="닫기" onPress={() => { console.log(eventData.recurrenceRule.frequency); console.log(eventData.recurrenceRule); setRecurModal(false) }} />
+                        <Button title="초기화" onPress={() => { initModal() }} />
                     </View>
+
+
                 </Modal>
 
             </View>
