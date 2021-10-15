@@ -85,8 +85,10 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
     //  { exceptionDate: exception, futureEvents: false }
     let res;
     if (exception == null) {
+
         res = await RNCalendarEvents.saveEvent(eventTitle, eventData)
     } else {
+        console.log('exception on')
         res = await RNCalendarEvents.saveEvent(eventTitle, eventData, { exceptionDate: exception, futureEvents: false })
     }
     const te = await RNCalendarEvents.findEventById(res)
@@ -106,8 +108,10 @@ export async function eventFetchFunc(data) {
     //     end : YYYY-MM-DDT00:00:00.000'Z'
     //     id: 'calendarId' 조회할 캘린더 id
     // }
-    const res = await RNCalendarEvents.fetchAllEvents(data.start, data.end, data.calId);
+    // const res = await RNCalendarEvents.fetchAllEvents(data.start, data.end, data.calId);
+    const res = await RNCalendarEvents.fetchAllEvents('2021-10-15T00:00:00.000Z', '2021-12-15T00:00:00.000Z', data.calId);//test
     let item = {};
+    // console.log(res);
     res.map((i) => {
         const date = moment(i.startDate).format('YYYY-MM-DD');
         const during = { start: i.startDate, end: i.endDate }

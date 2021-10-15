@@ -362,10 +362,10 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         dispatch({ type: 'frequency', data: 'none' });
         dispatch({ type: 'duration', data: 'PT0H' });
         if (eventData.recurrenceRule.interval != null) {
-            delete eventData.recurrenceRule.interval
+            delete eventData.recurrenceRule.interval;
         }
         if (eventData.recurrenceRule.occurrence != null) {
-            delete eventData.recurrenceRule.occurrence
+            delete eventData.recurrenceRule.occurrence;
         }
     }
     return (

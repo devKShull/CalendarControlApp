@@ -417,7 +417,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                 CalendarContract.Events.CALENDAR_ID,
                 CalendarContract.Events.AVAILABILITY,
                 CalendarContract.Events.HAS_ALARM,
-                CalendarContract.Instances.DURATION
+                CalendarContract.Instances.DURATION,
         }, selection, null, null);
 
         if (cursor.getCount() > 0) {
@@ -1082,33 +1082,76 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
             String[] recurrenceRules = cursor.getString(7).split(";");
             SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
 
-            if (recurrenceRules.length > 0 && recurrenceRules[0].split("=").length > 1) {
-                event.putString("recurrence", recurrenceRules[0].split("=")[1].toLowerCase());
-                recurrenceRule.putString("frequency", recurrenceRules[0].split("=")[1].toLowerCase());
+            for(int idx = 0 ; idx < recurrenceRules.length; idx++){
+                switch(recurrenceRules[idx].split("=")[0]){
+                    case "FREQ":
+                        event.putString("recurrence", recurrenceRules[idx].split("=")[1].toLowerCase());
+                        recurrenceRule.putString("frequency", recurrenceRules[idx].split("=")[1].toLowerCase());
+                        break;
+                    case "COUNT":
+                        recurrenceRule.putInt("occurrence", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
+                        break;
+                    case "INTERVAL":
+                        recurrenceRule.putInt("interval", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
+                        break;
+                    case "UNTIL":
+                        try {
+                            recurrenceRule.putString("endDate", sdf.format(format.parse(recurrenceRules[idx].split("=")[1])));
+                            break;
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                            break;
+                        }
+                    case "BYSETPOS":
+                        recurrenceRule.putInt("weekPositionInMonth", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
+                        break;
+                    case "BYDAY":
+                        WritableArray byday = new WritableNativeArray();
+                        String[] str = recurrenceRules[idx].split("=")[1].split(",");
+                        for(int i=0 ; i<str.length;i++){
+                            byday.pushString(str[i]);
+                        }
+                        recurrenceRule.putArray("daysOfWeek", byday);
+                        break;   
+                }
             }
-
             if (cursor.getColumnIndex(CalendarContract.Events.DURATION) != -1 && cursor.getString(cursor.getColumnIndex(CalendarContract.Events.DURATION)) != null) {
                 recurrenceRule.putString("duration", cursor.getString(cursor.getColumnIndex(CalendarContract.Events.DURATION)));
             }
 
-            if (recurrenceRules.length >= 2 && recurrenceRules[1].split("=")[0].equals("INTERVAL")) {
-                recurrenceRule.putInt("interval", Integer.parseInt(recurrenceRules[1].split("=")[1]));
-            }
+            // if (recurrenceRules.length > 0 && recurrenceRules[0].split("=").length > 1) {
+            //     event.putString("recurrence", recurrenceRules[0].split("=")[1].toLowerCase());
+            //     recurrenceRule.putString("frequency", recurrenceRules[0].split("=")[1].toLowerCase());
+            // }
 
-            if (recurrenceRules.length >= 3) {
-                if (recurrenceRules[2].split("=")[0].equals("UNTIL")) {
-                    try {
-                        recurrenceRule.putString("endDate", sdf.format(format.parse(recurrenceRules[2].split("=")[1])));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                } else if (recurrenceRules[2].split("=")[0].equals("COUNT")) {
-                    recurrenceRule.putInt("occurrence", Integer.parseInt(recurrenceRules[2].split("=")[1]));
-                }
+            // // if (recurrenceRules.length >= 2 && recurrenceRules[1].split("=")[0].equals("INTERVAL")) {
+            // //     recurrenceRule.putInt("interval", Integer.parseInt(recurrenceRules[1].split("=")[1]));
+            // // }
+            // if (recurrenceRules.length >= 2){
+            //     if(recurrenceRules[1].split("=")[0].equals("COUNT")){
+            //         recurrenceRule.putInt("occurrence", Integer.parseInt(recurrenceRules[1].split("=")[1]));
+            //     }
+            //     else if(recurrenceRules[1].split("=")[0].equals("INTERVAL")){
+            //         recurrenceRule.putInt("interval", Integer.parseInt(recurrenceRules[1].split("=")[1]));
+            //     }
+            // }
+            // if (recurrenceRules.length >= 3) {
+            //     if (recurrenceRules[2].split("=")[0].equals("UNTIL")) {
+            //         try {
+            //             recurrenceRule.putString("endDate", sdf.format(format.parse(recurrenceRules[2].split("=")[1])));
+            //         } catch (ParseException e) {
+            //             e.printStackTrace();
+            //         }
+            //     } else if (recurrenceRules[2].split("=")[0].equals("COUNT")) {
+            //         recurrenceRule.putInt("occurrence", Integer.parseInt(recurrenceRules[2].split("=")[1]));
+            //     } else if(recurrenceRules[2].split("=")[0].equals("INTERVAL")){
+            //         recurrenceRule.putInt("interval", Integer.parseInt(recurrenceRules[2].split("=")[1]));
+            //     }
 
-            }
+            // }
 
             event.putMap("recurrenceRule", recurrenceRule);
+            // event.putString("recRuleRawData", cursor.getString(7));
         }
 
         event.putString("id", cursor.getString(0));
