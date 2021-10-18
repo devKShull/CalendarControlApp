@@ -698,13 +698,25 @@ RCT_EXPORT_MODULE()
             if ([[rule recurrenceEnd] occurrenceCount]) {
                 [recurrenceRule setValue:@([[rule recurrenceEnd] occurrenceCount]) forKey:@"occurrence"];
             }
-            if ([rule daysOfTheWeek]) {
-                [recurrenceRule setValue:@([rule daysOfTheWeek]) forKey:@"daysOfWeek"];
-            }
+            // if ([rule daysOfTheWeek]) {
+            //     [recurrenceRule setValue:[rule daysOfTheWeek] forKey:@"daysOfWeek"];
+            // }
             if ([rule monthsOfTheYear]) {
-                [recurrenceRule setValue:@([rule monthsOfTheYear]) forKey:@"monthPositionInYear"];
+                [recurrenceRule setValue:[rule monthsOfTheYear] forKey:@"monthPositionInYear"];
             }
             
+            if ([rule daysOfTheWeek]) {
+                NSMutableArray *days = [[NSMutableArray alloc] init];
+                for (EKRecurrenceDayOfWeek *day in [rule daysOfTheWeek]) {
+                    NSMutableDictionary *formattedDay = [[NSMutableDictionary alloc] init];
+                    
+                    [formattedDay setValue:day.dayOfTheWeek forKey:@"dayOfWeek"]
+                    
+                    [days addObject:formattedDay];
+
+                }
+                [recurrenceRule setValue:days forKey:@"daysOfWeek"];
+            }
 
             [formedCalendarEvent setValue:recurrenceRule forKey:_recurrenceRule];
             
