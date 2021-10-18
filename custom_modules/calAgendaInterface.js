@@ -39,10 +39,10 @@ export default calAgendaInterface = ({ navigation }) => {
 
     const remove = async (id, title) => {    //이벤트 삭제
 
-        const itemIndex = moment(title).format('YYYY-MM-DD');
-        const res = items[itemIndex].filter(i => i.id != id)
-        setItems({ ...items, [itemIndex]: res });
-        console.log(items[itemIndex])
+        // const itemIndex = moment(title).format('YYYY-MM-DD');
+        // const res = items[itemIndex].filter(i => i.id != id)
+        // setItems({ ...items, [itemIndex]: res });
+        // console.log(items[itemIndex])
         const resBool = await calendarClass.eventRemoveFunc(id);
         console.log(resBool) // true or false
         fetchF();

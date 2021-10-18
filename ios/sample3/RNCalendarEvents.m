@@ -698,8 +698,16 @@ RCT_EXPORT_MODULE()
             if ([[rule recurrenceEnd] occurrenceCount]) {
                 [recurrenceRule setValue:@([[rule recurrenceEnd] occurrenceCount]) forKey:@"occurrence"];
             }
+            if ([rule daysOfTheWeek]) {
+                [recurrenceRule setValue:@([rule daysOfTheWeek]) forKey:@"daysOfWeek"];
+            }
+            if ([rule monthsOfTheYear]) {
+                [recurrenceRule setValue:@([rule monthsOfTheYear]) forKey:@"monthPositionInYear"];
+            }
+            
 
             [formedCalendarEvent setValue:recurrenceRule forKey:_recurrenceRule];
+            
         }
     }
     @catch (NSException *exception) {

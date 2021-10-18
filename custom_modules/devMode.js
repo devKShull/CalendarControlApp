@@ -16,14 +16,15 @@ export default devMode = () => {
             allDay: false,
             description: null,
             recurrenceRule: {
-                frequency: 'weekly', //(기존의 recurrence 랑 같음) weekly monthly yearly daily
+                frequency: 'yearly', //(기존의 recurrence 랑 같음) weekly monthly yearly daily
                 // endDate: '2021-12-01T01:00:00.000Z', //해당 endDate는 일정의 반복의 끝을 의미함 없을시 무한반복
                 duration: 'P3600S', //일정 지속시간 (기본일정의 endDate) P~~~S 초단위  PT~H 시단위  P~D 일단위 시작시간으로 부터 떨어진정도
                 interval: 1, //(반복주기) option
                 // occurrence: 10 //(반복횟수) option
-                weekStart: 'MO', //주 의 시작요일 ex) 'MO' 일경우 월요일을 기점으로 첫째주를 정함 화요일부터 시작되는 달이있으면 그다음주가 첫주가됨. 
-                daysOfWeek: ['MO', 'WE', 'TH', 'FR'], // 특정요일 반복 복수지정가능 주간반복시 사용 월간반복시 복수지정 불가 MO TU WE TH FR
-                // weekPositionInMonth: 2  //달중 몇번째 주 월별반복시에만 사용
+                // weekStart: 'MO', //주 의 시작요일 ex) 'MO' 일경우 월요일을 기점으로 첫째주를 정함 화요일부터 시작되는 달이있으면 그다음주가 첫주가됨. 
+                daysOfWeek: ['TU'], // 특정요일 반복 복수지정가능 주간반복시 사용 월간반복시 복수지정 불가 MO TU WE TH FR
+                weekPositionInMonth: 3,  //달중 몇번째 주 월별반복시에만 사용
+                monthPositionInYear: 10
             },
             alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전}
 
@@ -36,7 +37,7 @@ export default devMode = () => {
             "recurrenceRule": { "frequency": "yearly", "interval": 1, "occurrence": 5, "endDate": "2021-12-05T14:59:59.000Z", "duration": "P3600S" },
             "startDate": "2021-10-15T15:00:00.000Z",
         }
-        console.log(data2);
+        console.log(data);
         const res = await RNCalendarEvents.saveEvent('test20', data)
         console.log(res);
     }

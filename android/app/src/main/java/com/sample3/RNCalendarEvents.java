@@ -532,7 +532,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
         }
 
         if (details.hasKey("recurrence")) {
-            String rule = createRecurrenceRule(details.getString("recurrence"), null, null, null, null, null, null);
+            String rule = createRecurrenceRule(details.getString("recurrence"), null, null, null, null, null, null, null);
             if (rule != null) {
                 eventValues.put(CalendarContract.Events.RRULE, rule);
             }
@@ -550,6 +550,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                 ReadableArray daysOfWeek = null;
                 String weekStart = null;
                 Integer weekPositionInMonth = null;
+                Integer monthPositionInYear = null;
 
                 if (recurrenceRule.hasKey("interval")) {
                     interval = recurrenceRule.getInt("interval");
@@ -588,7 +589,11 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                     weekPositionInMonth = recurrenceRule.getInt("weekPositionInMonth");
                 }
 
-                String rule = createRecurrenceRule(frequency, interval, endDate, occurrence, daysOfWeek, weekStart, weekPositionInMonth);
+                if (recurrenceRule.hasKey("monthPositionInYear")) {
+                    monthPositionInYear = recurrenceRule.getInt("monthPositionInYear");
+                }
+
+                String rule = createRecurrenceRule(frequency, interval, endDate, occurrence, daysOfWeek, weekStart, weekPositionInMonth, monthPositionInYear);
                 if (duration != null) {
                     eventValues.put(CalendarContract.Events.DURATION, duration);
                 }
@@ -993,7 +998,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
     }
 
     //region Recurrence Rule
-    private String createRecurrenceRule(String recurrence, Integer interval, String endDate, Integer occurrence, ReadableArray daysOfWeek, String weekStart, Integer weekPositionInMonth) {
+    private String createRecurrenceRule(String recurrence, Integer interval, String endDate, Integer occurrence, ReadableArray daysOfWeek, String weekStart, Integer weekPositionInMonth, Integer monthPositionInYear) {
         String rrule;
 
         if (recurrence.equals("daily")) {
@@ -1015,12 +1020,22 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
         if (recurrence.equals("monthly") && daysOfWeek != null && weekPositionInMonth != null) {
             rrule += ";BYSETPOS=" + weekPositionInMonth;
             rrule += ";BYDAY=" + ReadableArrayToString(daysOfWeek);
-        }
+        }else if (recurrence.equals("monthly")&& daysOfWeek!=null){
+            rrule += ";BYDAY=" + ReadableArrayToString(daysOfWeek);
+        }// BYDAY에 BYSETPOS 를 포함시킬 때 ex 3TU 둘다 같은 결과임
 
         if (weekStart != null) {
             rrule += ";WKST=" + weekStart;
         }
-
+        if(recurrence.equals("yearly") && monthPositionInYear != null) {
+            rrule += ";BYMONTH=" + monthPositionInYear;
+            if (daysOfWeek != null && weekPositionInMonth != null) {
+                rrule += ";BYSETPOS=" + weekPositionInMonth;
+                rrule += ";BYDAY=" + ReadableArrayToString(daysOfWeek);
+            }else if (daysOfWeek!=null){
+                rrule += ";BYDAY=" + ReadableArrayToString(daysOfWeek);
+            }// BYDAY에 BYSETPOS 를 포함시킬 때 ex 3TU 둘다 같은 결과임
+        }
         if (interval != null) {
             rrule += ";INTERVAL=" + interval;
         }
@@ -1105,6 +1120,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                     case "BYSETPOS":
                         recurrenceRule.putInt("weekPositionInMonth", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
                         break;
+                    case "BYMONTH":
+                        recurrenceRule.putInt("monthPositionInYear", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
+                        break;
                     case "BYDAY":
                         WritableArray byday = new WritableNativeArray();
                         String[] str = recurrenceRules[idx].split("=")[1].split(",");
@@ -1151,7 +1169,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
             // }
 
             event.putMap("recurrenceRule", recurrenceRule);
-            // event.putString("recRuleRawData", cursor.getString(7));
+            event.putString("recRuleRawData", cursor.getString(7));
         }
 
         event.putString("id", cursor.getString(0));
