@@ -1,6 +1,6 @@
 import RNCalendarEvents from "../cal";
 import moment from 'moment';
-
+import axios from "axios";
 
 // 권한 체크 함수 authorized 가 아닐시 권한 요청
 export async function permissionCheck() {
@@ -144,28 +144,100 @@ export async function eventRemoveFunc(id) {
     const res = await RNCalendarEvents.removeEvent(id, { futureEvents: true })
     return res
 }
+export async function eventSend(titleIn, dataIn, id) {
+    console.log('sendStart')
+    let parseData = {
+        "title": titleIn,
+        "id": id,
+        "alarms": dataIn.alarms,
+        "allDay": dataIn.allDay,
+        "description": dataIn.description,
+        "startDate": moment(dataIn.startDate),
+        // "endDate": moment(dataIn.endDate),
+        // "recurrenceRule": {
+        //     "frequency": dataIn.recurrenceRule.frequency,
+        //     "interval": dataIn.recurrenceRule.interval,
+        //     "occurrence": dataIn.recurrenceRule.occurrence,
+        //     "daysOfWeek": dataIn.recurrenceRule.daysOfWeek,
+        //     "recEndDate": dataIn.recurrenceRule.endDate
+        // },
+    }
+    if (dataIn.recurrenceRule != null) {
+        const duration = dataIn.recurrenceRule.duration
+        if (duration == 'P1D') {
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(1, 'd') }
+            // dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
+        } else if (duration.indexOf('S') != -1) {
+            const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
+            console.log(second)
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
+            // dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
+        } else if (duration.indexOf('H') != -1) {
+            const hour = duration.substring(duration.indexOf('T') + 1, duration.indexOf('H'))
+            console.log(hour)
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
+            // dispatch({ type: 'endDate', data: moment(res.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
+        }
+
+        parseData = {
+            ...parseData, recurrenceRule: {
+                "frequency": dataIn.recurrenceRule.frequency,
+                "interval": dataIn.recurrenceRule.interval,
+                "occurrence": dataIn.recurrenceRule.occurrence,
+                "daysOfWeek": dataIn.recurrenceRule.daysOfWeek,
+                "recEndDate": dataIn.recurrenceRule.endDate
+            }
+        }
+
+    } else {
+        parseData = {
+            ...parseData, endDate: dataIn.endDate, recurrenceRule: {
+                "frequency": 'none',
+                "interval": 0,
+                "occurrence": 0,
+                "daysOfWeek": '',
+                "recEndDate": ''
+            }
+        }
+    }
 
 
 
-// //IOS
-// {"alarms": [{"date": "2019-10-01T00:10:00.000Z"}], 
-// "allDay": true, 
-// "startDate": "2019-10-02T15:00:00.000Z",  
-// "endDate": "2019-10-03T14:59:59.000Z",
-// "id": "6FBCD7D8-1493-491B-A9D3-5E1B54E8F640", 
-// "notes": "일정에 대한 설명", 
-// "occurrenceDate": "2019-10-02T15:00:00.000Z", 
-// "recurrenceRule": {"frequency": "yearly", "interval": 1, "occurrence": 5, 'duration': 'weekly', 'endDate':'2019-10-03T14:59:59.000Z'}, 
-// "title": "개천절", 
-// }
 
-// //ANDROID
-// {"alarms": [{"date": "2019-10-13T00:10:00.000Z"}], 
-// "allDay": true, 
-// "description": "일정 설명", 
-// "endDate": "", 
-// "id": "144", 
-// "recurrenceRule": {"duration": "P1D", "frequency": "yearly", "interval": 1, "occurrence": 5,'endDate':'2019-10-03T14:59:59.000Z'}, 
-// "startDate": "2019-10-13T00:00:00.000Z", 
-// "title": "혁규 생일"
-// }
+    console.log(parseData);
+    axios({
+        method: 'post',
+        url: 'https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/insertApi.php',
+        headers: {
+            "Content-Type": 'application/json',
+            "Accept": "application/json"
+        },
+        data: parseData
+    }).then(res => {
+        console.log(res.data);
+    }).catch(err => {
+        console.log(err);
+    })
+
+
+    // axios.post('https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/insertApi.php',
+    //     null
+    //     , {
+    //         params: parseData,
+    //         headers: {
+    //             "Content-Type": 'application/json',
+    //             "Accept": "application/json"
+    //         }
+    //     }
+    // )
+    //     .then(function (response) {
+
+    //         console.log(response.request.response);
+    //         // setTxt('log: ' + JSON.parse(response.request.response))
+    //         // setTxt2(JSON.stringify(response))
+    //         //console.log(response);
+
+    //     }).catch(function (error) {
+    //         console.log(error);
+    //     })
+}

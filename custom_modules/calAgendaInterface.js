@@ -19,6 +19,8 @@ export default calAgendaInterface = ({ navigation }) => {
     const fetchF = async (fetchDate = {
         start: moment(changedDate).subtract(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
         end: moment(changedDate).add(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
+        // start: moment(changedDate).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+        // end: moment(changedDate).add(1, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
     }) => {
         console.log('fetch ons')
         const res = await calendarClass.eventFetchFunc(fetchDate)
@@ -89,6 +91,8 @@ export default calAgendaInterface = ({ navigation }) => {
             const loadDate = {
                 start: moment(month.dateString).subtract(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z',
                 end: moment(month.dateString).add(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z'
+                // start: moment(month.dateString).format('YYYY-MM-DDT00:00:00.000') + 'Z',
+                // end: moment(month.dateString).add(1, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z'
             }
             fetchF(loadDate);
             setChangedDate(month.dateString);

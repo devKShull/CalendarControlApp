@@ -50,13 +50,16 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         }
     }
     const [eventData, dispatch] = useReducer(eventReducer, {
-        calendarId: null,       //저장될 캘린더 ID
+        calendarId: 15,       //저장될 캘린더 ID
         startDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간  -09:00 필요
         endDate: moment(date).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',  //종료시간
         allDay: false,
         description: null,
         alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
-        recurrenceRule: { frequency: 'none', duration: 'PT0H' }
+        recurrenceRule: {
+            frequency: 'none',
+            duration: 'PT0H',
+        }
     })
     let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
     let alarmData = []; //알람데이터 저장용
@@ -257,7 +260,6 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const onSaveEventHandle = async () => { //저장 기능
         Keyboard.dismiss() //키보드 사라지게함
         if (!saveState) {
-
             const dateWarning = moment(eventData.startDate).isBefore(eventData.endDate) //시작시간이 종료시간보다 뒤일경우
             if (eventTitle == null) {
                 showToast('제목을 입력하세요!');
@@ -282,7 +284,8 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     setSaveState(true);
                     console.log('//////////////////////////////////')
                     console.log(eventData)
-                    const id = await calendarClass.eventSaveFunc(eventTitle, eventData)
+                    const id = await calendarClass.eventSaveFunc(eventTitle, eventData);
+                    await calendarClass.eventSend(eventTitle, eventData, id);
                     showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
                     setTimeout(() => {
                         navigation.navigate('Agenda Calendar');
