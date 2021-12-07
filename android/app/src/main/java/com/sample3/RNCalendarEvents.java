@@ -418,6 +418,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                 CalendarContract.Events.AVAILABILITY,
                 CalendarContract.Events.HAS_ALARM,
                 CalendarContract.Instances.DURATION,
+                CalendarContract.Events.EXRULE,
+                CalendarContract.Events.EXDATE
+                
         }, selection, null, null);
 
         if (cursor.getCount() > 0) {
@@ -1170,8 +1173,12 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
 
             event.putMap("recurrenceRule", recurrenceRule);
             event.putString("recRuleRawData", cursor.getString(7));
+            
+            
+            
         }
-
+        event.putString("exRULE", cursor.getString(12));
+        event.putString("exDATE", cursor.getString(13));
         event.putString("id", cursor.getString(0));
         event.putMap("calendar", findCalendarById(cursor.getString(cursor.getColumnIndex("calendar_id"))));
         event.putString("title", cursor.getString(cursor.getColumnIndex("title")));

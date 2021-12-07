@@ -1,10 +1,11 @@
-import React, { useReducer } from "react";
-import { Button, View } from "react-native";
+import React, { useReducer, useState } from "react";
+import { Button, View, Text } from "react-native";
 import * as calendarClass from './calendarClass'
 import RNCalendarEvents from "../cal";
 import moment from "moment";
+import axios from "axios";
 export default devMode = () => {
-
+    const [txt, settxt] = useState()
     const test = async () => {
         // calendarClass.eventSaveFunc()
         const date = new Date();
@@ -25,7 +26,7 @@ export default devMode = () => {
                 // weekStart: 'MO', //주 의 시작요일 ex) 'MO' 일경우 월요일을 기점으로 첫째주를 정함 화요일부터 시작되는 달이있으면 그다음주가 첫주가됨. 
                 daysOfWeek: ['TU'], // 특정요일 반복 복수지정가능 주간반복시 사용 월간반복시 복수지정 불가 MO TU WE TH FR
                 // weekPositionInMonth: 3,  //달중 몇번째 주 월별반복시에만 사용
-                // monthPositionInYear: 10
+                // monthPositionInYear: 10 //연간 반복시 사용 1년중 몇번째 월 선택
             },
             alarms: ['2021-10-01T01:00:00.000Z'], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전}
 
@@ -54,6 +55,7 @@ export default devMode = () => {
     const testfe = async () => {
         await calendarClass.eventSend("testing", data);
     }
+
     const eventReducer = (state, action) => { //eventData 지정을 위한 리듀서
         switch (action.type) {
             case 'calendarId':
@@ -89,11 +91,100 @@ export default devMode = () => {
         alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
         recurrenceRule: { duration: 'p3600' }
     })
+
+    const saveTest = async () => {
+        let data = await axios({
+            method: 'post',
+            url: 'https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/testselectApi.php',
+            headers: {
+                "Content-Type": 'application/json',
+                "Accept": "application/json"
+            },
+            data: { search_start_date: "2021-01-01 00:00:00", search_end_date: "2021-12-20 00:00:00" }
+        }).then(res => {
+            console.log(res.data);
+            console.log(res);
+            if (res.request.response != '검색된 값을 찾지 못함') {
+                console.log(JSON.parse(res.request.response))
+                settxt(JSON.stringify(JSON.parse(res.request.response)));
+                return JSON.parse(res.request.response);
+            }
+
+        }).catch(err => {
+            console.log(err);
+        })
+
+        data != null &&
+            data.map(async (i) => {
+                console.log("*************************************************")
+                console.log(i)
+
+                const title = i.title;
+                let saveData = {
+                    calendarId: "8",
+                    startDate: moment(i.startDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+                    endDate: moment(i.endDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+                    description: i.description,
+                    alarms: [],
+                }
+                // if (i.id != null && i.id != '') {
+                //     saveData = { ...saveData, "id": i.id }
+                // }
+                if (i.recurrenceRule.allDay == "1") {
+                    saveData = { ...saveData, "allDay": true }
+                } else {
+                    saveData = { ...saveData, "allDay": false }
+                }
+                let recurrenceRuleData = { frequency: '' }
+                if (i.recurrenceRule.frequency != "") {
+
+                    recurrenceRuleData = { frequency: i.recurrenceRule.frequency };
+                    const diffTime = moment.duration(moment(saveData.endDate).diff(saveData.startDate)).asSeconds(); // 시간차 사전 계산
+                    if (diffTime == 0) {
+                        recurrenceRuleData = { ...recurrenceRuleData, "duration": 'P1D' }
+                    } else {
+                        recurrenceRuleData = { ...recurrenceRuleData, "duration": 'P' + Math.floor(diffTime) + 'S' }
+                    }
+                    delete saveData.endDate;
+
+                    if (i.recurrenceRule.daysOfWeek != "" && i.recurrenceRule.daysOfWeek != null) {
+                        const days = i.recurrenceRule.daysOfWeek.split(",");
+                        recurrenceRuleData = { ...recurrenceRuleData, "daysOfWeek": days }
+                    }
+                    if (i.recurrenceRule.interval != 0) {
+                        recurrenceRuleData = { ...recurrenceRuleData, "interval": parseInt(i.recurrenceRule.interval) }
+
+                    }
+                    if (i.recurrenceRule.occurrence != 0) {
+                        recurrenceRuleData = { ...recurrenceRuleData, "occurrence": parseInt(i.recurrenceRule.occurrence) }
+                    }
+                    if (i.recurrenceRule.recEndDate != '') {
+                        recurrenceRuleData = { ...recurrenceRuleData, "endDate": i.recurrenceRule.recEndDate }
+                    }
+                    saveData = { ...saveData, "recurrenceRule": recurrenceRuleData }
+                }
+
+                console.log(saveData);
+                console.log(title);
+                await calendarClass.eventSaveFunc(title, saveData);
+                // console.log(res);
+            })
+
+    }
+    const random = () => {
+        console.log(Math.floor(Math.random() * 109951162777600).toString(16));
+    }
+    const findId = async () => {
+        const res = await calendarClass.eventFindId("125");
+        console.log(res)
+    }
     return (
         <View>
-            <Button title='save' onPress={() => { dispatch({ type: 'recurrenceRule', data: { fre: '야호' } }) }} />
-            <Button title='save2' onPress={() => test()} />
-            <Button title='find' onPress={() => testfe()} />
+            {/* <Button title='save' onPress={() => { dispatch({ type: 'recurrenceRule', data: { fre: '야호' } }) }} /> */}
+            <Button title='test' onPress={() => saveTest()} />
+            <Button title='find' onPress={() => random()} />
+            <Text>{txt}</Text>
         </View>
     )
+
 }

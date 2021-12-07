@@ -9,8 +9,10 @@ import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
 import { Picker } from '@react-native-picker/picker'
 import RadioForm from 'react-native-simple-radio-button'
+import WeekPicker, { week } from './weekPicker'
 
 
+export const weekContext = React.createContext();
 export default eventSaveMainInterface = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date()); //현재 시각 및 오늘 날자
 
@@ -45,6 +47,12 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 return { ...state, recurrenceRule: { ...state.recurrenceRule, occurrence: action.data } }
             case 'recurrenceEndDate':
                 return { ...state, recurrenceRule: { ...state.recurrenceRule, endDate: action.data } }
+            case 'daysOfWeek':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, daysOfWeek: action.data } }
+            case 'weekPositionInMonth':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, weekPositionInMonth: action.data } }
+            case 'monthPositionInMonth':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, monthPositionInMonth: action.data } }
             default:
                 break;
         }
@@ -79,7 +87,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     const [isModalVisible, setModalVisible] = useState(false);
     const [recurModalVisible, setRecurModal] = useState(false);
     const [recShow, setRecShow] = useState()
-
+    const [weeks, setWeeks] = useState([]);
     const init = async () => {
 
         if (route.params != null) {
@@ -374,11 +382,11 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
     return (
         <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
             <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
-                <TextInput placeholder={"제목"} value={eventTitle} style={{ fontSize: 30, backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
+                <TextInput placeholder={"제목"} value={eventTitle} style={{ fontSize: 30, color: "#000000", backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
 
                 <View>
 
-                    <TouchableOpacity onPress={() => showDatepicker(true)} >
+                    <TouchableOpacity onPress={() => showDatepicker(true)}>
                         <View style={styles.rowStyleDate}>
                             <Text style={{ fontSize: 15, textAlign: 'left' }}>시작    </Text>
                             {eventData.allDay ?
@@ -413,7 +421,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         onChange={onChange}
                     />
                 )}
-                <TextInput value={eventData.description} placeholder={"메모"} style={{ fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
+                <TextInput value={eventData.description} placeholder={"메모"} style={{ color: "#000000", fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
 
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1 }}>
@@ -498,7 +506,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text>반복횟수 </Text>
                                 <TextInput
-
+                                    style={{ backgroundColor: "#d9d9d9" }}
                                     keyboardType='numeric'
                                     onChangeText={(txt) => dispatch({ type: 'occurrence', data: parseInt(txt) })}
                                 />
@@ -506,12 +514,16 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TextInput
-
+                                    style={{ backgroundColor: "#d9d9d9" }}
                                     keyboardType='numeric'
                                     onChangeText={(txt) => dispatch({ type: 'interval', data: parseInt(txt) })}
                                 />
                                 <Text>주기로 반복</Text>
                             </View>
+                            <weekContext.Provider value={{ weeks, setWeeks }}>
+                                <WeekPicker />
+                            </weekContext.Provider>
+
                             <Text>반복종료날짜 설정</Text>
                             {/* <DateTimePicker
                                     testID="dateTimePicker"
@@ -522,9 +534,15 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                                     onChange={onChange}
                                 /> */}
                         </View>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Button title="닫기" onPress={() => {
+                                console.log(weeks);
+                                dispatch({ type: "daysOfWeek", data: weeks })
+                                console.log(eventData.recurrenceRule.frequency); console.log(eventData.recurrenceRule); setRecurModal(false)
+                            }} />
+                            <Button title="초기화" onPress={() => { initModal() }} />
+                        </View>
 
-                        <Button title="닫기" onPress={() => { console.log(eventData.recurrenceRule.frequency); console.log(eventData.recurrenceRule); setRecurModal(false) }} />
-                        <Button title="초기화" onPress={() => { initModal() }} />
                     </View>
 
 

@@ -1,6 +1,7 @@
 import RNCalendarEvents from "../cal";
 import moment from 'moment';
 import axios from "axios";
+import AsyncStorage from "@react-native-community/async-storage";
 
 // 권한 체크 함수 authorized 가 아닐시 권한 요청
 export async function permissionCheck() {
@@ -86,11 +87,12 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
     let res;
     if (exception == null) {
 
-        res = await RNCalendarEvents.saveEvent(eventTitle, eventData)
+        res = await RNCalendarEvents.saveEvent(eventTitle, eventData);
     } else {
         console.log('exception on')
         res = await RNCalendarEvents.saveEvent(eventTitle, eventData, { exceptionDate: exception, futureEvents: false })
     }
+
     const te = await RNCalendarEvents.findEventById(res)
     console.log(te);
     console.log(res);
@@ -144,15 +146,16 @@ export async function eventRemoveFunc(id) {
     const res = await RNCalendarEvents.removeEvent(id, { futureEvents: true })
     return res
 }
+
 export async function eventSend(titleIn, dataIn, id) {
     console.log('sendStart')
+    const key = Math.floor(Math.random() * 109951162777600).toString(16)
+    AsyncStorage.setItem('eventKeys', JSON.stringify({ "key": key, "id": id }));
     let parseData = {
         "title": titleIn,
-        "id": id,
-        "alarms": dataIn.alarms,
+        "id": key,
         "allDay": dataIn.allDay,
-        "description": dataIn.description,
-        "startDate": moment(dataIn.startDate),
+        "startDate": moment(dataIn.startDate).add("09:00"),
         // "endDate": moment(dataIn.endDate),
         // "recurrenceRule": {
         //     "frequency": dataIn.recurrenceRule.frequency,
@@ -162,47 +165,80 @@ export async function eventSend(titleIn, dataIn, id) {
         //     "recEndDate": dataIn.recurrenceRule.endDate
         // },
     }
-    if (dataIn.recurrenceRule != null) {
+    if (dataIn.alarms != null) {
+        parseData = { ...parseData, "alarms": dataIn.alarms }
+    } else {
+        parseData = { ...parseData, "alarms": '' }
+    }
+    if (dataIn.description != null) {
+        parseData = { ...parseData, "description": dataIn.description }
+    } else {
+        parseData = { ...parseData, "description": '' }
+    }
+    if (dataIn.recurrenceRule != null) { //반복일정시 event Save를 위해 endDate를 지웠기 때문에 duration 으로 다시만듬
         const duration = dataIn.recurrenceRule.duration
         if (duration == 'P1D') {
             parseData = { ...parseData, endDate: moment(parseData.startDate).add(1, 'd') }
-            // dispatch({ type: 'endDate', data: moment(res.startDate).add(1, 'd') });
         } else if (duration.indexOf('S') != -1) {
             const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
             console.log(second)
             parseData = { ...parseData, endDate: moment(parseData.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
-            // dispatch({ type: 'endDate', data: moment(res.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
         } else if (duration.indexOf('H') != -1) {
             const hour = duration.substring(duration.indexOf('T') + 1, duration.indexOf('H'))
             console.log(hour)
             parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
-            // dispatch({ type: 'endDate', data: moment(res.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' })
         }
 
-        parseData = {
-            ...parseData, recurrenceRule: {
-                "frequency": dataIn.recurrenceRule.frequency,
-                "interval": dataIn.recurrenceRule.interval,
-                "occurrence": dataIn.recurrenceRule.occurrence,
-                "daysOfWeek": dataIn.recurrenceRule.daysOfWeek,
-                "recEndDate": dataIn.recurrenceRule.endDate
-            }
+        let recData;
+        if (dataIn.recurrenceRule.frequency != null) {
+            recData = { ...recData, "frequency": dataIn.recurrenceRule.frequency }
+        }
+        if (dataIn.recurrenceRule.interval != null) {
+            recData = { ...recData, "interval": dataIn.recurrenceRule.interval }
+        } else {
+            recData = { ...recData, "interval": '' }
+        }
+        if (dataIn.recurrenceRule.occurrence != null) {
+            recData = { ...recData, "occurrence": dataIn.recurrenceRule.occurrence }
+        } else {
+            recData = { ...recData, "occurrence": '' }
+        }
+        if (dataIn.recurrenceRule.daysOfWeek != null) {
+            recData = { ...recData, "daysOfWeek": dataIn.recurrenceRule.daysOfWeek }
+        } else {
+            recData = { ...recData, "daysOfWeek": '' }
+        }
+        if (dataIn.recurrenceRule.recEndDate != null) {
+            recData = { ...recData, "recEndDate": dataIn.recurrenceRule.endDate }
+        } else {
+            recData = { ...recData, "recEndDate": '' }
+        }
+        if (dataIn.recurrenceRule.weekPositionInMonth != null) {
+            recData = { ...recData, "weekPositionInMonth": dataIn.recurrenceRule.weekPositionInMonth }
+        } else {
+            recData = { ...recData, "weekPositionInMonth": '' }
+        }
+        if (dataIn.recurrenceRule.monthPositionInMonth != null) {
+            recData = { ...recData, "monthPositionInMonth": dataIn.recurrenceRule.monthPositionInMonth }
+        } else {
+            recData = { ...recData, "monthPositionInMonth": '' }
         }
 
+        parseData = { ...parseData, "recurrenceRule": recData }
     } else {
-        parseData = {
+        parseData = { //반복일정이 아닐때 빈 recurrenceRule 데이터 전송
             ...parseData, endDate: dataIn.endDate, recurrenceRule: {
-                "frequency": 'none',
+                "frequency": '',
                 "interval": 0,
                 "occurrence": 0,
                 "daysOfWeek": '',
-                "recEndDate": ''
+                "recEndDate": '',
+                "daysOfWeek": '',
+                "weekPositionInMonth": 0,
+                "monthPositionInMonth": 0,
             }
         }
     }
-
-
-
 
     console.log(parseData);
     axios({
