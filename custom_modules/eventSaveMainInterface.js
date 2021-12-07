@@ -9,6 +9,7 @@ import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
 import RadioForm from 'react-native-simple-radio-button'
 import WeekPicker, { week } from './weekPicker'
+import { Icon } from 'native-base'
 
 
 export const weekContext = React.createContext();
@@ -379,9 +380,9 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
         }
     }
     return (
-        <View style={{ backgroundColor: '#98CA32', flex: 1 }}>
-            <View style={{ margin: 15, backgroundColor: '#F5F7D4', padding: 25 }}>
-                <TextInput placeholder={"제목"} value={eventTitle} style={{ fontSize: 30, color: "#000000", backgroundColor: '#FAFBE9', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
+        <View style={{ backgroundColor: 'white', flex: 1 }}>
+            <View style={{ margin: 15, backgroundColor: '#f7f7f7', padding: 25 }}>
+                <TextInput placeholder={"제목"} value={eventTitle} style={{ fontSize: 30, color: "#000000", backgroundColor: '#f7f7f7', marginVertical: 10 }} onChangeText={(txt) => setTitle(txt)} />
 
                 <View>
 
@@ -420,18 +421,20 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                         onChange={onChange}
                     />
                 )}
-                <TextInput value={eventData.description} placeholder={"메모"} style={{ color: "#000000", fontSize: 20, backgroundColor: '#FAFBE9' }} onChangeText={(txt) => eventData.description = txt} />
+                <TextInput value={eventData.description} placeholder={"메모"} style={{ color: "#000000", fontSize: 20, backgroundColor: '#f7f7f7' }} onChangeText={(txt) => eventData.description = txt} />
 
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
-                    <View style={{ flexDirection: 'row', flex: 1 }}>
-                        <Text style={styles.touchText}>캘린더 위치</Text>
+                    <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
+                        <Icon name="calendar" type="Feather" style={styles.touchText} />
+                        <Text style={styles.touchText}> 캘린더 위치</Text>
                         {calNameShow}
                     </View>
                 </TouchableOpacity>
                 <View style={{ height: 50 }}>
                     <TouchableOpacity onPress={() => { navigation.navigate("알림", eventData.alarms) }} style={{ height: 50 }}>
-                        <View style={{ flexDirection: 'row', flex: 1 }}>
-                            <Text style={styles.touchText}>알림</Text>
+                        <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
+                            <Icon name="alarm-outline" type="Ionicons" style={styles.touchText} />
+                            <Text style={styles.touchText}> 알림</Text>
                             {alarmShow}
                         </View>
                     </TouchableOpacity>
@@ -458,7 +461,8 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                 </Picker> */}
                 <TouchableOpacity onPress={() => { setRecurModal(true); }} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
-                        <Text style={{ flex: 1 }}>반복</Text>
+                        <Icon name="return-down-back" type="Ionicons" style={styles.touchText} />
+                        <Text style={{ flex: 1 }}> 반복</Text>
                         {/* {recShow} */}
                         <RecView />
                     </View>
