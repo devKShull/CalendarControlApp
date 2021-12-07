@@ -4,7 +4,7 @@ import moment from 'moment';
 import * as calendarClass from './calendarClass'
 import { useFocusEffect } from '@react-navigation/native';
 import { Agenda } from 'react-native-calendars';
-
+import { Icon, Fab, Header, Left, Right, Body, H1, H2 } from 'native-base';
 
 export default calAgendaInterface = ({ navigation }) => {
     const [items, setItems] = useState({});
@@ -101,7 +101,23 @@ export default calAgendaInterface = ({ navigation }) => {
     }
 
     return (
-        <View style={{ height: '90%' }}>
+        <View style={{ height: '100%' }}>
+            <Header style={{ backgroundColor: 'white' }}>
+                <Left>
+                    <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ alignSelf: 'center' }}>
+                        <Icon type="Ionicons" name="menu-outline" />
+                    </TouchableOpacity>
+
+                </Left>
+                <Body>
+                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 }}> Calendar</Text>
+                </Body>
+                <Right >
+                    <TouchableOpacity onPress={() => fetchF()} style={{ alignItems: 'center', marginRight: 10 }}>
+                        <Icon type="Feather" name="refresh-ccw" style={{ fontSize: 23 }} />
+                    </TouchableOpacity>
+                </Right>
+            </Header>
             <Agenda
                 items={items}
                 renderItem={renderItem}
@@ -112,7 +128,7 @@ export default calAgendaInterface = ({ navigation }) => {
                 loadItemsForMonth={loadItems}
             />
 
-            <Button
+            {/* <Button
                 onPress={() => { fetchF() }}
                 title="새로고침"
             />
@@ -120,8 +136,15 @@ export default calAgendaInterface = ({ navigation }) => {
                 onPress={() => { navigation.navigate('Save Event Main') }}
                 style={[{ justifyContent: 'center' }, styles.touchs]}>
                 <Text style={{ color: 'white' }}>일정 추가</Text>
-            </TouchableOpacity>
-
+            </TouchableOpacity> */}
+            <Fab
+                position="bottomRight"
+                onPress={() => { navigation.navigate('Save Event Main') }}>
+                <Icon name="plus-circle" type="Feather" />
+            </Fab>
+            {/* <TouchableOpacity>
+                <Icon name="plus-circle" type="Feather" />
+            </TouchableOpacity> */}
         </View>
     )
 }

@@ -7,7 +7,6 @@ import moment from 'moment'
 import * as calendarClass from './calendarClass'
 import Toast from 'react-native-easy-toast'
 import CheckBox from '@react-native-community/checkbox'
-import { Picker } from '@react-native-picker/picker'
 import RadioForm from 'react-native-simple-radio-button'
 import WeekPicker, { week } from './weekPicker'
 
@@ -293,7 +292,7 @@ export default eventSaveMainInterface = ({ navigation, route }) => {
                     console.log('//////////////////////////////////')
                     console.log(eventData)
                     const id = await calendarClass.eventSaveFunc(eventTitle, eventData);
-                    await calendarClass.eventSend(eventTitle, eventData, id);
+                    // await calendarClass.eventSend(eventTitle, eventData, id);
                     showToast(eventTitle + '일정이 저장되었습니다. id:' + id);
                     setTimeout(() => {
                         navigation.navigate('Agenda Calendar');

@@ -188,7 +188,6 @@ export async function eventSend(titleIn, dataIn, id) {
             console.log(hour)
             parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
         }
-
         let recData;
         if (dataIn.recurrenceRule.frequency != null) {
             recData = { ...recData, "frequency": dataIn.recurrenceRule.frequency }
@@ -223,7 +222,6 @@ export async function eventSend(titleIn, dataIn, id) {
         } else {
             recData = { ...recData, "monthPositionInMonth": '' }
         }
-
         parseData = { ...parseData, "recurrenceRule": recData }
     } else {
         parseData = { //반복일정이 아닐때 빈 recurrenceRule 데이터 전송

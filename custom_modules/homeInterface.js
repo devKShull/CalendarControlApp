@@ -23,7 +23,7 @@ export default Home = () => {
         <Drawer.Navigator
             initialRouteName="Calendar"
             drawerContent={(props) => <CustomDrawer {...props} />}>
-            <Drawer.Screen name='Agenda Calendar' component={calAgendaInterface} />
+            <Drawer.Screen name='Agenda Calendar' component={calAgendaInterface} options={{ headerShown: false }} />
             <Drawer.Screen name='Calendar List' component={calFetchInterface} />
             <Drawer.Screen name='Create Cal' component={calCreateInterface} />
             <Drawer.Screen name='Develop mode' component={devMode} />

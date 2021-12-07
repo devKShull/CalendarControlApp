@@ -41,19 +41,19 @@ export default devMode = () => {
         // }
         console.log(data);
         // const res = await RNCalendarEvents.saveEvent('test20', data)
-        await calendarClass.eventSend("testing", {
-            "alarms": [{ "date": "2021-10-20T00:10:00.000Z" }],
-            "allDay": true,
-            "description": "일정 설명 test",
-            "startDate": "2021-10-21T00:00:00.000Z",
-            "endDate": "2021-10-22T00:00:00.000Z",
-            "recurrenceRule": { "frequency": "yearly", "interval": 1, "occurrence": 5, 'daysOfWeek': '', 'endDate': '' },
-            "title": "Test title2"
-        });
+        // await calendarClass.eventSend("testing", {
+        //     "alarms": [{ "date": "2021-10-20T00:10:00.000Z" }],
+        //     "allDay": true,
+        //     "description": "일정 설명 test",
+        //     "startDate": "2021-10-21T00:00:00.000Z",
+        //     "endDate": "2021-10-22T00:00:00.000Z",
+        //     "recurrenceRule": { "frequency": "yearly", "interval": 1, "occurrence": 5, 'daysOfWeek': '', 'endDate': '' },
+        //     "title": "Test title2"
+        // });
         // console.log(res);
     }
     const testfe = async () => {
-        await calendarClass.eventSend("testing", data);
+        // await calendarClass.eventSend("testing", data);
     }
 
     const eventReducer = (state, action) => { //eventData 지정을 위한 리듀서
