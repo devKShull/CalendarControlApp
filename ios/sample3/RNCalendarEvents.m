@@ -710,8 +710,7 @@ RCT_EXPORT_MODULE()
                 for (EKRecurrenceDayOfWeek *day in [rule daysOfTheWeek]) {
                     NSMutableDictionary *formattedDay = [[NSMutableDictionary alloc] init];
                     
-                    [formattedDay setValue:day.dayOfTheWeek forKey:@"dayOfWeek"]
-                    
+                
                     [days addObject:formattedDay];
 
                 }
