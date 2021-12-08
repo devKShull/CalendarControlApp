@@ -64,11 +64,9 @@ export default calAgendaInterface = ({ navigation }) => {
                 </View>
                 <View style={{ flex: 1 }}>
                     <TouchableOpacity
-                        style={[styles.item, { height: item.height }]}
+                        style={[styles.item, { height: item.height }, { justifyContent: 'center', alignItems: 'center' }]}
                         onPress={() => { remove(item.id, item.during.start); }}>
-                        <Text>
-                            삭제
-                        </Text>
+                        <Icon type="Feather" name="delete" />
                     </TouchableOpacity>
                 </View>
             </View>
