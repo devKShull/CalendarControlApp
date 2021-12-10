@@ -1,7 +1,7 @@
 import CheckBox from "@react-native-community/checkbox";
 import React, { useState, useReducer, useContext } from "react";
 import { View, Text } from "react-native";
-import { weekContext } from "./eventSaveMainInterface";
+import { weekContext } from "./eventSaveMain";
 
 const weekPicker = () => {
     const { weeks, setWeeks } = useContext(weekContext);

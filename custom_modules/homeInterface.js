@@ -2,9 +2,9 @@
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import React from 'react'
 import { View, Text } from 'react-native';
-import calAgendaInterface from './calAgendaInterface';
-import calFetchInterface from './calFetchInterface';
-import calCreateInterface from './calCreateInterface';
+import calAgendaInterface from './AgendaCalendar';
+import calFetchInterface from './calendarList';
+import calCreateInterface from './calendarCreator';
 import devMode from './devMode';
 
 const CustomDrawer = (props) => {

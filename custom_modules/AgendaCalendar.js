@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { View, Button, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import moment from 'moment';
+import 'moment/locale/ko';
 import * as calendarClass from './calendarClass'
 import { useFocusEffect } from '@react-navigation/native';
 import { Agenda } from 'react-native-calendars';
@@ -15,17 +16,13 @@ export default calAgendaInterface = ({ navigation }) => {
             fetchF();
         }
     }
-
     const fetchF = async (fetchDate = {
         start: moment(changedDate).subtract(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
         end: moment(changedDate).add(8, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
-        // start: moment(changedDate).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
-        // end: moment(changedDate).add(1, 'month').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z'
     }) => {
         console.log('fetch ons')
         const res = await calendarClass.eventFetchFunc(fetchDate)
-        setItems(res);
-
+        setItems({ ...items, ...res });
     }
 
     useEffect(() => { // 초기 셋팅
@@ -40,14 +37,12 @@ export default calAgendaInterface = ({ navigation }) => {
     ))
 
     const remove = async (id, title) => {    //이벤트 삭제
-
-        // const itemIndex = moment(title).format('YYYY-MM-DD');
-        // const res = items[itemIndex].filter(i => i.id != id)
-        // setItems({ ...items, [itemIndex]: res });
-        // console.log(items[itemIndex])
+        const itemIndex = moment(title).format('YYYY-MM-DD');
+        const res = items[itemIndex].filter(i => i.id != id)
+        setItems({ ...items, [itemIndex]: res });
+        console.log(items[itemIndex])
         const resBool = await calendarClass.eventRemoveFunc(id);
         console.log(resBool) // true or false
-        fetchF();
     }
 
     const renderItem = (item) => { //아이템 렌더링
@@ -81,16 +76,16 @@ export default calAgendaInterface = ({ navigation }) => {
 
     const loadItems = (month) => { // 스크롤 시 작동하는 함수 
         console.log(month);
+        //changedDate 바뀐시점의 날짜
         const after = moment(changedDate).add(5, 'month')
-        const before = moment(changedDate).subtract(5, 'month')
+        const before = moment(changedDate).subtract(5, 'month') //앞뒤로 5개월씩
         console.log(changedDate);
-        if (moment(month.dateString).isBefore(before) || moment(month.dateString).isAfter(after)) {
+        if (moment(month.dateString).isBefore(before) || moment(month.dateString).isAfter(after)) { //스크롤된 날짜가 5개월범위 넘어갈 시
             console.log('loadDate on');
-            const loadDate = {
+            const loadDate = { //새로 8개월씩 로딩
                 start: moment(month.dateString).subtract(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z',
+                //캘린더에서 날짜 선택시에도 작동되기때문에 시작시간도 필요
                 end: moment(month.dateString).add(8, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z'
-                // start: moment(month.dateString).format('YYYY-MM-DDT00:00:00.000') + 'Z',
-                // end: moment(month.dateString).add(1, 'month').format('YYYY-MM-DDT00:00:00.000') + 'Z'
             }
             fetchF(loadDate);
             setChangedDate(month.dateString);
@@ -125,24 +120,11 @@ export default calAgendaInterface = ({ navigation }) => {
                 futureScrollRange={100}
                 loadItemsForMonth={loadItems}
             />
-
-            {/* <Button
-                onPress={() => { fetchF() }}
-                title="새로고침"
-            />
-            <TouchableOpacity
-                onPress={() => { navigation.navigate('Save Event Main') }}
-                style={[{ justifyContent: 'center' }, styles.touchs]}>
-                <Text style={{ color: 'white' }}>일정 추가</Text>
-            </TouchableOpacity> */}
             <Fab
                 position="bottomRight"
                 onPress={() => { navigation.navigate('Save Event Main') }}>
                 <Icon name="plus-circle" type="Feather" />
             </Fab>
-            {/* <TouchableOpacity>
-                <Icon name="plus-circle" type="Feather" />
-            </TouchableOpacity> */}
         </View>
     )
 }

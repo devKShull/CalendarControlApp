@@ -12,10 +12,10 @@ export default selectCal = ({ navigation }) => { //캘린더 선택 화면
         console.log("initOn")
         const data = await calendarClass.calFetchFunc();
         console.log(data.google)
+        //캘린더 분류
         setActive(
             <View>
                 {data.google != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Google Calendars</Text>}
-
                 {data.google.map((i, key) => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {

@@ -1,5 +1,6 @@
 import RNCalendarEvents from "../cal";
 import moment from 'moment';
+import 'moment/locale/ko';
 import axios from "axios";
 import AsyncStorage from "@react-native-community/async-storage";
 
@@ -7,9 +8,9 @@ import AsyncStorage from "@react-native-community/async-storage";
 export async function permissionCheck() {
     while (true) {
         console.log("check func On")
-        let res = await RNCalendarEvents.checkPermissions((readOnly = false))
+        let res = await RNCalendarEvents.checkPermissions((readOnly = false)) //권한요청 readOnly 읽기전용
         console.log(res);
-        if (res != 'authorized') {
+        if (res != 'authorized') {// 권한 재요청
             await RNCalendarEvents.requestPermissions((readOnly = false))
         }
         else { return res } // res authorized denied restricted
@@ -46,6 +47,7 @@ export async function calRemoveFunc(id) {
 // 캘린더 조회 함수
 export async function calFetchFunc() {
     const res = await RNCalendarEvents.findCalendars()
+    console.log(res);
     const googleCalData = res.filter((i) => { //구글 캘린더 필터링
         return (i.type === ('com.google'))
     });
@@ -55,7 +57,7 @@ export async function calFetchFunc() {
     const samCalData = res.filter((i) => {//삼성 캘린더 필터링
         return (i.type === ('com.osp.app.signin'))
     })
-    const otherCalendars = res.filter((i) => {//삼성 캘린더 필터링
+    const otherCalendars = res.filter((i) => {//기타 캘린더 필터링
         return (i.source === ('Other'))
     })
     const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars }
@@ -83,16 +85,16 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
     console.log('//////////////////////////')
     console.log(eventData);
     console.log(exception);
-    //  { exceptionDate: exception, futureEvents: false }
+    let event = eventData;
+    event.startDate = moment(event.startDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
+    event.endDate = moment(event.endDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');   //모듈이 UTC시간 기준으로 저장하는 듯
     let res;
     if (exception == null) {
-
-        res = await RNCalendarEvents.saveEvent(eventTitle, eventData);
+        res = await RNCalendarEvents.saveEvent(eventTitle, event);
     } else {
         console.log('exception on')
-        res = await RNCalendarEvents.saveEvent(eventTitle, eventData, { exceptionDate: exception, futureEvents: false })
+        res = await RNCalendarEvents.saveEvent(eventTitle, event, { exceptionDate: exception, futureEvents: false })
     }
-
     const te = await RNCalendarEvents.findEventById(res)
     console.log(te);
     console.log(res);
@@ -100,7 +102,6 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
 }
 export async function eventFindId(id) {
     const res = await RNCalendarEvents.findEventById(id)
-
     return res;
 }
 export async function eventFetchFunc(data) {
@@ -111,23 +112,21 @@ export async function eventFetchFunc(data) {
     //     id: 'calendarId' 조회할 캘린더 id
     // }
     const res = await RNCalendarEvents.fetchAllEvents(data.start, data.end, data.calId);
-    // const res = await RNCalendarEvents.fetchAllEvents('2021-10-15T00:00:00.000Z', '2021-12-15T00:00:00.000Z', data.calId);//test
-    let item = {};
-    // console.log(res);
+    let item = {}; //RN calendar에 표시하기위한 데이터 파싱
     res.map((i) => {
         const date = moment(i.startDate).format('YYYY-MM-DD');
         const during = { start: i.startDate, end: i.endDate }
-        if (item[date] != null) {
+        if (item[date] != null) {//동일 날짜 이벤트
             item[date] = [...item[date], { 'name': i.title, 'id': i.id, 'during': during }]
         } else {
-            item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, }] //alarms : i.alarms 삭제
+            item[date] = [{ 'name': i.title, 'id': i.id, 'during': during, }]
         }
 
     })
-    // 아래는 Optional 일정이 없는 날짜에 빈 배열 추가
+    // 아래는 Option 일정이 없는 날짜에 빈 배열 추가
     let beforeDate = data.start
     while (true) {
-        if (moment(beforeDate).isBefore(data.end)) { // beforeDate 와 endDate 비교 
+        if (moment(beforeDate).isBefore(data.end)) { // fetch종료 날짜까지 빈데이터 탐색
             const date = moment(beforeDate).format("YYYY-MM-DD")
             if (item[date] == null) {
                 item[date] = [];
@@ -137,56 +136,51 @@ export async function eventFetchFunc(data) {
             break;
         }
     }
-
     return item
-    // Ex) item = {date:[{name:'타이틀', id: '이벤트 id', during: {start: '시작시간', end: '종료시간'},}, {..} ], ......}
+    // Ex) item = {date:[{name:'타이틀', id: '이벤트 id', during: {start: '시작시간', end: '종료시간'}}, {..} ], ......}
 }
 
-export async function eventRemoveFunc(id) {
+export async function eventRemoveFunc(id) { //이벤트 삭제
     const res = await RNCalendarEvents.removeEvent(id, { futureEvents: true })
-    return res
+    return res //삭제 결과
 }
 
-export async function eventSend(titleIn, dataIn, id) {
+export async function eventSend(titleIn, dataIn, id) { //이벤트 서버로 전송
     console.log('sendStart')
     const key = Math.floor(Math.random() * 109951162777600).toString(16)
     AsyncStorage.setItem('eventKeys', JSON.stringify({ "key": key, "id": id }));
-    let parseData = {
+    let parseData = { //서버 전송용으로 기존데이터 파싱
         "title": titleIn,
         "id": key,
         "allDay": dataIn.allDay,
-        "startDate": moment(dataIn.startDate).add("09:00"),
-        // "endDate": moment(dataIn.endDate),
-        // "recurrenceRule": {
-        //     "frequency": dataIn.recurrenceRule.frequency,
-        //     "interval": dataIn.recurrenceRule.interval,
-        //     "occurrence": dataIn.recurrenceRule.occurrence,
-        //     "daysOfWeek": dataIn.recurrenceRule.daysOfWeek,
-        //     "recEndDate": dataIn.recurrenceRule.endDate
-        // },
+        "startDate": moment(dataIn.startDate).add("09:00"), //이벤트 저장중에 9시간을 뺏기때문에 다시더함
     }
-    if (dataIn.alarms != null) {
+
+    if (dataIn.alarms != null) { //알림 데이터 삽입
         parseData = { ...parseData, "alarms": dataIn.alarms }
     } else {
         parseData = { ...parseData, "alarms": '' }
     }
-    if (dataIn.description != null) {
+
+    if (dataIn.description != null) { //설명 데이터 삽입
         parseData = { ...parseData, "description": dataIn.description }
     } else {
         parseData = { ...parseData, "description": '' }
     }
-    if (dataIn.recurrenceRule != null) { //반복일정시 event Save를 위해 endDate를 지웠기 때문에 duration 으로 다시만듬
+
+    //반복 규칙 삽입
+    if (dataIn.recurrenceRule != null) { //반복일정시 event Save를 위해 endDate를 지웠기 때문에 duration을 이용하여 다시만듬
         const duration = dataIn.recurrenceRule.duration
-        if (duration == 'P1D') {
-            parseData = { ...parseData, endDate: moment(parseData.startDate).add(1, 'd') }
-        } else if (duration.indexOf('S') != -1) {
+        if (duration == 'P1D') { //endDate 제작
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(1, 'd') } //P1D = 하루동안-> 종료날짜 하루뒤
+        } else if (duration.indexOf('S') != -1) {//S 시간차이 초단위 구분 ex 3600S = 60분
             const second = duration.substring(duration.indexOf('P') + 1, duration.indexOf('S'))
             console.log(second)
-            parseData = { ...parseData, endDate: moment(parseData.startDate).add(second, 's').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(second, 's').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
         } else if (duration.indexOf('H') != -1) {
             const hour = duration.substring(duration.indexOf('T') + 1, duration.indexOf('H'))
             console.log(hour)
-            parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
+            parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' }
         }
         let recData;
         if (dataIn.recurrenceRule.frequency != null) {
@@ -225,7 +219,7 @@ export async function eventSend(titleIn, dataIn, id) {
         parseData = { ...parseData, "recurrenceRule": recData }
     } else {
         parseData = { //반복일정이 아닐때 빈 recurrenceRule 데이터 전송
-            ...parseData, endDate: dataIn.endDate, recurrenceRule: {
+            ...parseData, endDate: moment(dataIn.endDate).add("09:00"), recurrenceRule: {
                 "frequency": '',
                 "interval": 0,
                 "occurrence": 0,
@@ -239,19 +233,19 @@ export async function eventSend(titleIn, dataIn, id) {
     }
 
     console.log(parseData);
-    axios({
-        method: 'post',
-        url: 'https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/insertApi.php',
-        headers: {
-            "Content-Type": 'application/json',
-            "Accept": "application/json"
-        },
-        data: parseData
-    }).then(res => {
-        console.log(res.data);
-    }).catch(err => {
-        console.log(err);
-    })
+    // axios({
+    //     method: 'post',
+    //     url: 'https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/insertApi.php',
+    //     headers: {
+    //         "Content-Type": 'application/json',
+    //         "Accept": "application/json"
+    //     },
+    //     data: parseData
+    // }).then(res => {
+    //     console.log(res.data);
+    // }).catch(err => {
+    //     console.log(err);
+    // })
 
 
     // axios.post('https://ntm.nanoit.kr/ysh/calendar/test20211008/UploadFullCalendar/insertApi.php',

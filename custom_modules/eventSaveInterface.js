@@ -1,7 +1,7 @@
-import eventSaveMainInterface from './eventSaveMainInterface'
+import eventSaveMainInterface from './eventSaveMain'
 import { createStackNavigator } from '@react-navigation/stack'
-import selectCalInterface from './selectCalInterface'
-import calAlarmSetInterface from './calAlarmSetInterface'
+import selectCalInterface from './calendarSelector'
+import calAlarmSetInterface from './setAlarm'
 import React from 'react'
 
 

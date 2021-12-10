@@ -23,7 +23,6 @@ export default calendarFetchInterface = () => {
         setActive(
             <View>
                 {data.google != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Google Calendars</Text>}
-
                 {data.google.map((i, key) => {
                     return (
                         <TouchableOpacity key={key} onPress={() => {

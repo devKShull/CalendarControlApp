@@ -8,18 +8,18 @@ export default calAlarmSetInterface = ({ navigation, route }) => {   // 캘린�
     const reducer = (state, action) => { // 체크박스 value 
         switch (action.type) {
             case 0:
-                return { ...state, 'zero': action.data }
+                return { ...state, 'zero': action.data } //알림시작시간
             case 10:
-                return { ...state, 'ten': action.data }
+                return { ...state, 'ten': action.data } //알림 10분전
             case 60:
-                return { ...state, 'hour': action.data }
+                return { ...state, 'hour': action.data } //알림 60분전
             case 1440:
-                return { ...state, 'day': action.data }
+                return { ...state, 'day': action.data } //알림 하루전
             default:
                 break;
         }
     }
-    const [checkBool, dispatch] = useReducer(reducer, {
+    const [checkBool, dispatch] = useReducer(reducer, { //체크박스 체크벨류
         'zero': false,
         'ten': false,
         'hour': false,
