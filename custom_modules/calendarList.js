@@ -19,7 +19,6 @@ export default calendarFetchInterface = () => {
     ))
     const init = async () => {
         const data = await calendarClass.calFetchFunc();
-        console.log(data.google)
         setActive(
             <View>
                 {data.google != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Google Calendars</Text>}
