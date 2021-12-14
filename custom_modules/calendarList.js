@@ -8,14 +8,12 @@ export default calendarFetchInterface = () => {
     const [active, setActive] = useState() // component state
     const [isRemove, setIsRemove] = useState(false) // 삭제모드
     const toastRef = useRef();
-    useEffect(() => {
-        init()
-    }, [isRemove]) // isRemove 가 true나 false 로 변할시 TouchableOpacity 의 onPress 변경 및 렌더링을 위해 init() 호출
+
     useFocusEffect(useCallback(
         () => {
             init()
         },
-        [],
+        [isRemove],// isRemove 가 true나 false 로 변할시 TouchableOpacity 의 onPress 변경 및 렌더링을 위해 init() 호출
     ))
     const init = async () => {
         const data = await calendarClass.calFetchFunc();

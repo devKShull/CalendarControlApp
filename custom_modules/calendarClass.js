@@ -41,27 +41,27 @@ export async function calCreateFunc(params) {
 }
 // 캘린더 삭제 함수
 export async function calRemoveFunc(id) {
-    const res = await RNCalendarEvents.removeCalendar(id)
+    const res = await RNCalendarEvents.removeCalendar(id);
     return res // bool true or false
 }
 // 캘린더 조회 함수
 export async function calFetchFunc() {
-    const res = await RNCalendarEvents.findCalendars()
+    const res = await RNCalendarEvents.findCalendars();
     console.log(res);
     const googleCalData = res.filter((i) => { //구글 캘린더 필터링
-        return (i.type === ('com.google'))
+        return (i.type === ('com.google'));
     });
     const localCalData = res.filter((i) => { //로컬 캘린더 필터링
-        return (i.type === ('LOCAL') || i.source === ('Default'))
+        return (i.type === ('LOCAL') || i.source === ('Default'));
     })
     const samCalData = res.filter((i) => {//삼성 캘린더 필터링
-        return (i.type === ('com.osp.app.signin'))
+        return (i.type === ('com.osp.app.signin'));
     })
     const otherCalendars = res.filter((i) => {//기타 캘린더 필터링
-        return (i.source === ('Other'))
+        return (i.source === ('Other'));
     })
     const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars }
-    return parsingRes
+    return parsingRes;
     // parsingRes = { 리턴 데이터
     //     google: [{
     //         "allowedAvailabilities": ["busy", "free"],
@@ -87,7 +87,9 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
     console.log(exception);
     let event = eventData;
     event.startDate = moment(event.startDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
-    event.endDate = moment(event.endDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');   //모듈이 UTC시간 기준으로 저장하는 듯
+    event.endDate = moment(event.endDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    //테스트 결과 콘솔창엔 한국시간이 정상적으로 뜸 하지만 저장된 일정은 9시간이 더해진 시간이 저장됨
+    //RNcalendarEvents모듈이 입력받은 시간을 자동으로 한국시간(+09:00)으로 자동 변환하는 것으로 판단됨
     let res;
     if (exception == null) {
         res = await RNCalendarEvents.saveEvent(eventTitle, event);
@@ -153,7 +155,7 @@ export async function eventSend(titleIn, dataIn, id) { //이벤트 서버로 전
         "title": titleIn,
         "id": key,
         "allDay": dataIn.allDay,
-        "startDate": moment(dataIn.startDate).add("09:00"), //이벤트 저장중에 9시간을 뺏기때문에 다시더함
+        "startDate": moment(dataIn.startDate).add("09:00"), //이벤트 저장중에 9시간을 뺏기때문에 다시더함 서버에서 확인 필요
     }
 
     if (dataIn.alarms != null) { //알림 데이터 삽입

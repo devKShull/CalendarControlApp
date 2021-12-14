@@ -10,6 +10,7 @@ import { Icon, Fab, Header, Left, Right, Body, H1, H2 } from 'native-base';
 export default calAgendaInterface = ({ navigation }) => {
     const [items, setItems] = useState({});
     const [changedDate, setChangedDate] = useState(new Date());
+
     const check = async () => { //권한 체크
         const res = await calendarClass.permissionCheck() // authorized => 허용, restricted, denied => 거부
         if (res == 'authorized') {
@@ -25,13 +26,9 @@ export default calAgendaInterface = ({ navigation }) => {
         setItems({ ...items, ...res });
     }
 
-    useEffect(() => { // 초기 셋팅
-        check();
-    }, [])
-
     useFocusEffect(useCallback( //포커스가 돌아왔을때 다시로딩
         () => {
-            fetchF();
+            check();
         },
         [],
     ))
