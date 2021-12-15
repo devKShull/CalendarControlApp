@@ -89,7 +89,7 @@ export async function eventSaveFunc(eventTitle, eventData, exception = null) {
     event.startDate = moment(event.startDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
     event.endDate = moment(event.endDate).subtract("09:00").format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     //테스트 결과 콘솔창엔 한국시간이 정상적으로 뜸 하지만 저장된 일정은 9시간이 더해진 시간이 저장됨
-    //RNcalendarEvents모듈이 입력받은 시간을 자동으로 한국시간(+09:00)으로 자동 변환하는 것으로 판단됨
+    //format 마지막에 Z문자를 삽입할 시 현재시간에 9시간이 더해진 시간으로 렌더링됨(콘솔엔 정상시간이 표시됨)
     let res;
     if (exception == null) {
         res = await RNCalendarEvents.saveEvent(eventTitle, event);
