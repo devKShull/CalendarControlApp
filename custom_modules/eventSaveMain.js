@@ -14,7 +14,7 @@ import { Icon } from 'native-base'
 
 
 export const weekContext = React.createContext();
-export default eventSaveMainInterface = ({ navigation, route }) => {
+const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date()); //현재 시각
     const eventReducer = (state, action) => { //eventData 지정을 위한 리듀서
         switch (action.type) {
@@ -485,3 +485,5 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     }
 })
+
+export default eventSaveMain

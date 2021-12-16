@@ -72,7 +72,6 @@ const weekPicker = () => {
                 value={checkWeek.su}
                 onValueChange={(val) => { dispatch({ type: 6, data: val }); set(val, 'SU') }} />
             <Text>일</Text>
-
         </View>
     )
 

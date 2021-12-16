@@ -4,6 +4,8 @@ import * as calendarClass from './calendarClass'
 import RNCalendarEvents from "../cal";
 import moment from "moment";
 import axios from "axios";
+
+
 export default devMode = () => {
     const [txt, settxt] = useState()
     const test = async () => {
@@ -180,7 +182,7 @@ export default devMode = () => {
     }
     return (
         <View>
-            {/* <Button title='save' onPress={() => { dispatch({ type: 'recurrenceRule', data: { fre: '야호' } }) }} /> */}
+            {/* <Button title='save' onPress={() => { dispatch({ type: 'recurrenceRule', data: { fre: 'yearly' } }) }} /> */}
             <Button title='test' onPress={() => saveTest()} />
             <Button title='find' onPress={() => random()} />
             <Text>{txt}</Text>
