@@ -53,6 +53,17 @@ export default calendarFetchInterface = () => {
                         </TouchableOpacity>
                     )
                 })}
+                {data.icloud != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>iCloud Calendars</Text>}
+                {data.icloud.map((i, key) => {
+                    return (
+                        <TouchableOpacity key={key} onPress={() => {
+                            console.log(isRemove);
+                            if (isRemove) { remove(i.id); showToast(i.title) }
+                        }}>
+                            <Text>{i.title}</Text>
+                        </TouchableOpacity>
+                    )
+                })}
                 {data.others != '' && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>Other Calendars</Text>}
                 {data.others.map((i, key) => {
                     return (
@@ -64,7 +75,7 @@ export default calendarFetchInterface = () => {
                         </TouchableOpacity>
                     )
                 })}
-                {(data.google == '' && data.local == '' && data.samsung == '' && data.others == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
+                {(data.google == '' && data.local == '' && data.samsung == '' && data.others == '' &&data.icloud == '') && <Text style={{ fontSize: 25, fontWeight: 'bold', }}>캘린더가 없습니다.</Text>}
             </View>
         )
     }

@@ -351,16 +351,7 @@ const eventSaveMain = ({ navigation, route }) => {
                                 <Text style={{ textAlign: 'right', flex: 1 }}>{moment(eventData.endDate).format('MM월 DD일  HH시 mm분')}</Text>}
                         </View>
                     </TouchableOpacity>
-                    <View style={{ flexDirection: 'row' }}>
-                        <CheckBox
-                            value={eventData.allDay}
-                            disabled={false}
-                            onValueChange={(val) => { dispatch({ type: 'allDay', data: val }) }}
-                        />
-                        <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
-                    </View>
-                </View>
-                {show && (
+                    {show && (
                     <DateTimePicker
                         testID="dateTimePicker"
                         value={date}
@@ -370,6 +361,16 @@ const eventSaveMain = ({ navigation, route }) => {
                         onChange={onChange}
                     />
                 )}
+                    <View style={{ flexDirection: 'row' }}>
+                        <CheckBox
+                            value={eventData.allDay}
+                            disabled={false}
+                            onValueChange={(val) => { dispatch({ type: 'allDay', data: val }) }}
+                        />
+                        <Text style={{ marginLeft: 15, alignSelf: 'center' }}>하루종일</Text>
+                    </View>
+                </View>
+                
                 <TextInput value={eventData.description} placeholder={"메모"} style={{ color: "#000000", fontSize: 20, backgroundColor: '#f7f7f7' }} onChangeText={(txt) => eventData.description = txt} />
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>

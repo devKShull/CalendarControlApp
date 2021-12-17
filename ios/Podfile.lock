@@ -337,7 +337,7 @@ PODS:
     - React-perflogger (= 0.65.1)
   - RNCAsyncStorage (1.12.1):
     - React-Core
-  - RNCCheckbox (0.5.8):
+  - RNCCheckbox (0.5.9):
     - React-Core
   - RNCMaskedView (0.2.6):
     - React-Core
@@ -583,7 +583,7 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: 85187f19dd9c47a7c102f9994f9d14e4dc2110de
   ReactCommon: eafed38eec7b591c31751bfa7494801618460459
   RNCAsyncStorage: b03032fdbdb725bea0bd9e5ec5a7272865ae7398
-  RNCCheckbox: 6bd119c26c6eb8264a29d59ff66cb70a14de3349
+  RNCCheckbox: 6369808337432cdbd5025d62ceced2480b4c51df
   RNCMaskedView: c298b644a10c0c142055b3ae24d83879ecb13ccd
   RNDateTimePicker: 7658208086d86d09e1627b5c34ba0cf237c60140
   RNGestureHandler: a479ebd5ed4221a810967000735517df0d2db211

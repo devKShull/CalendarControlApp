@@ -5,7 +5,7 @@ import 'moment/locale/ko';
 import * as calendarClass from './calendarClass'
 import { useFocusEffect } from '@react-navigation/native';
 import { Agenda } from 'react-native-calendars';
-import { Icon, Fab, Header, Left, Right, Body, H1, H2 } from 'native-base';
+import { Icon, Fab, Header, Left, Right, Body, H1, H2,Row } from 'native-base';
 
 export default calAgendaInterface = ({ navigation }) => {
     const [items, setItems] = useState({});
@@ -94,14 +94,15 @@ export default calAgendaInterface = ({ navigation }) => {
         <View style={{ height: '100%' }}>
             <Header style={{ backgroundColor: 'white' }}>
                 <Left>
-                    <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ alignSelf: 'center' }}>
-                        <Icon type="Ionicons" name="menu-outline" />
-                    </TouchableOpacity>
-
+                    <Row style={{alignItems:'center'}}>
+                        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ alignSelf: 'center' }}>
+                            <Icon type="Ionicons" name="menu-outline" style={{color:'#0000ff'}}/>
+                        </TouchableOpacity>
+                        <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 , marginLeft:10}}> Calendar</Text>
+                    </Row>
+                    
                 </Left>
-                <Body>
-                    <Text style={{ color: 'black', fontWeight: 'bold', fontSize: 20 }}> Calendar</Text>
-                </Body>
+                
                 <Right >
                     <TouchableOpacity onPress={() => fetchF()} style={{ alignItems: 'center', marginRight: 10 }}>
                         <Icon type="Feather" name="refresh-ccw" style={{ fontSize: 23 }} />

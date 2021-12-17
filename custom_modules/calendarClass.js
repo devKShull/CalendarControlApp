@@ -49,7 +49,7 @@ export async function calFetchFunc() {
     const res = await RNCalendarEvents.findCalendars();
     console.log(res);
     const googleCalData = res.filter((i) => { //구글 캘린더 필터링
-        return (i.type === ('com.google'));
+        return (i.type === ('com.google')||i.source ===("Gmail"));
     });
     const localCalData = res.filter((i) => { //로컬 캘린더 필터링
         return (i.type === ('LOCAL') || i.source === ('Default'));
@@ -57,10 +57,13 @@ export async function calFetchFunc() {
     const samCalData = res.filter((i) => {//삼성 캘린더 필터링
         return (i.type === ('com.osp.app.signin'));
     })
+    const icloudCalData = res.filter((i) => {//기타 캘린더 필터링
+        return (i.source === ('iCloud'));
+    })
     const otherCalendars = res.filter((i) => {//기타 캘린더 필터링
         return (i.source === ('Other'));
     })
-    const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars }
+    const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars, icloud: icloudCalData}
     return parsingRes;
     // parsingRes = { 리턴 데이터
     //     google: [{
