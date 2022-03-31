@@ -1,4 +1,4 @@
-package com.sample3;
+package com.RNCalendar;
 
 import android.app.Activity;
 import android.content.ContentResolver;

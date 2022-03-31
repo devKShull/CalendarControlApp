@@ -1,4 +1,4 @@
-package com.sample3;
+package com.RNCalendar;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

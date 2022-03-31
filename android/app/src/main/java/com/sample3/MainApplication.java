@@ -14,7 +14,7 @@ import java.util.List;
 import com.facebook.react.bridge.JSIModulePackage;
 import com.swmansion.reanimated.ReanimatedJSIModulePackage;
 
-import com.sample3.RNCalendarEventsPackage;
+import com.RNCalendar.RNCalendarEventsPackage;
 //react-native-reanimated installation
 
 public class MainApplication extends Application implements ReactApplication {
