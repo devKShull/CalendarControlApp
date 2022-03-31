@@ -518,19 +518,31 @@ const eventSaveMain = ({ navigation, route }) => {
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text>반복횟수 </Text>
                                 <TextInput
-                                    value={eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
+                                    // value={eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
-                                    onChangeText={(txt) => dispatch({ type: 'occurrence', data: parseInt(txt) })}
+                                    onChangeText={(txt) => {
+                                        if (isNaN(parseInt)) {
+                                            dispatch({ type: 'occurrence', data: null });
+                                        } else {
+                                            dispatch({ type: 'occurrence', data: parseInt(txt) });
+                                        }
+                                    }}
                                 />
                                 <Text>번 반복</Text>
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TextInput
-                                    value={eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
+                                    // value={eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
-                                    onChangeText={(txt) => dispatch({ type: 'interval', data: parseInt(txt) })}
+                                    onChangeText={(txt) => {
+                                        if (isNaN(parseInt)) {
+                                            dispatch({ type: 'interval', data: null });
+                                        } else {
+                                            dispatch({ type: 'interval', data: parseInt(txt) });
+                                        }
+                                    }}
                                 />
                                 <Text>주기로 반복</Text>
                             </View>
@@ -538,7 +550,7 @@ const eventSaveMain = ({ navigation, route }) => {
                                 <WeekPicker />
                             </weekContext.Provider>
                             <Button onPress={() => setRecPicker(true)} title="반복종료날짜 선택"></Button>
-                            {eventData.recurrenceRule.endDate && (
+                            {eventData.recurrenceRule && eventData.recurrenceRule.endDate && (
                                 <View>
                                     <Text>{moment(eventData.recurrenceRule.endDate).format('YYYY년 MM월 DD일 HH시 mm분')}</Text>
                                 </View>
