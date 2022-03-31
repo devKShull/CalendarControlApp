@@ -522,8 +522,8 @@ const eventSaveMain = ({ navigation, route }) => {
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {
-                                        if (isNaN(parseInt)) {
-                                            dispatch({ type: 'occurrence', data: null });
+                                        if (isNaN(parseInt(txt))) {
+                                            delete eventData.recurrenceRule.occurrence;
                                         } else {
                                             dispatch({ type: 'occurrence', data: parseInt(txt) });
                                         }
@@ -537,8 +537,8 @@ const eventSaveMain = ({ navigation, route }) => {
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {
-                                        if (isNaN(parseInt)) {
-                                            dispatch({ type: 'interval', data: null });
+                                        if (isNaN(parseInt(txt))) {
+                                            delete eventData.recurrenceRule.interval;
                                         } else {
                                             dispatch({ type: 'interval', data: parseInt(txt) });
                                         }
@@ -572,7 +572,9 @@ const eventSaveMain = ({ navigation, route }) => {
                                 title="닫기"
                                 onPress={() => {
                                     console.log(weeks);
-                                    dispatch({ type: 'daysOfWeek', data: weeks });
+                                    if (weeks.length != 0) {
+                                        dispatch({ type: 'daysOfWeek', data: weeks });
+                                    }
                                     console.log(eventData.recurrenceRule.frequency);
                                     console.log(eventData.recurrenceRule);
                                     setRecurModal(false);

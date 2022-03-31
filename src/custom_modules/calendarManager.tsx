@@ -88,7 +88,7 @@ export async function calFetchFunc() {
     return parsingRes;
 }
 
-export async function eventSaveFunc(eventTitle: string, eventData: CalendarEventWritable, exception: string | null = null) {
+export async function eventSaveFunc(eventTitle: string, eventData: CalendarEventWritable, exception: string | undefined = undefined) {
     let event = eventData;
     event.startDate = moment(event.startDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
     if (event.endDate) {
@@ -96,6 +96,10 @@ export async function eventSaveFunc(eventTitle: string, eventData: CalendarEvent
     }
     if (event.recurrenceRule?.endDate) {
         event.recurrenceRule.endDate = moment(event.recurrenceRule.endDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    }
+    let exceptionDateTime = exception
+    if (exception) {
+        exceptionDateTime = moment(exception).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     }
     console.log('//////////////////////////');
     console.log(event);
@@ -107,7 +111,7 @@ export async function eventSaveFunc(eventTitle: string, eventData: CalendarEvent
             res = await RNCalendarEvents.saveEvent(eventTitle, event)
         } else {
             console.log('exception on');
-            res = await RNCalendarEvents.saveEvent(eventTitle, event, { exceptionDate: exception, futureEvents: false });
+            res = await RNCalendarEvents.saveEvent(eventTitle, event, { exceptionDate: exceptionDateTime, futureEvents: false });
         }
         const te = await RNCalendarEvents.findEventById(res);
         console.log(te);
