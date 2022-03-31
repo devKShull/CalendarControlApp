@@ -5,7 +5,7 @@ import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import 'moment/locale/ko';
-import * as calendarClass from './calendarClass';
+import * as calendarClass from '../custom_modules/calendarManager';
 import Toast from 'react-native-easy-toast';
 import CheckBox from '@react-native-community/checkbox';
 import RadioForm from 'react-native-simple-radio-button';

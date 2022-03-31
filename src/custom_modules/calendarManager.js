@@ -1,4 +1,4 @@
-import RNCalendarEvents from '../cal';
+import RNCalendarEvents from '../CalendarModule';
 import moment from 'moment';
 import 'moment/locale/ko';
 import axios from 'axios';

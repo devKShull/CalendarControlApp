@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import * as calendarClass from './calendarClass';
+import * as calendarClass from '../custom_modules/calendarManager';
 import { View, TouchableOpacity, Text } from 'react-native';
 
 export default selectCal = ({ navigation }) => {

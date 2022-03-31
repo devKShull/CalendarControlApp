@@ -1,7 +1,7 @@
 import React, { useReducer, useState } from 'react';
 import { Button, View, Text } from 'react-native';
-import * as calendarClass from './calendarClass';
-import RNCalendarEvents from '../cal';
+import * as calendarClass from '../custom_modules/calendarManager';
+import RNCalendarEvents from '../CalendarModule';
 import moment from 'moment';
 import axios from 'axios';
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import * as calendarClass from './calendarClass';
+import * as calendarClass from '../custom_modules/calendarManager';
 import Toast from 'react-native-easy-toast';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 

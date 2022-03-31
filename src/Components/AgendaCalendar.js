@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Button, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import moment from 'moment';
 import 'moment/locale/ko';
-import * as calendarClass from './calendarClass';
+import * as calendarClass from '../custom_modules/calendarManager';
 import { useFocusEffect } from '@react-navigation/native';
 import { Agenda } from 'react-native-calendars';
 import { Icon, Fab, Header, Left, Right, Body, H1, H2, Row } from 'native-base';

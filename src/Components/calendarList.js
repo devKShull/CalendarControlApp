@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { View, Text, Switch, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-easy-toast';
 import { useFocusEffect } from '@react-navigation/native';
-import * as calendarClass from './calendarClass';
+import * as calendarClass from '../custom_modules/calendarManager';
 
 export default calendarFetchInterface = () => {
     const [active, setActive] = useState(); // component state
