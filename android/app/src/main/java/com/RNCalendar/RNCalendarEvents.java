@@ -478,6 +478,7 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
     private int addEvent(String title, ReadableMap details, ReadableMap options) throws ParseException {
         String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+        Log.d("details",details.toString());
         boolean skipTimezone = false;
         if(details.hasKey("skipAndroidTimezone") && details.getBoolean("skipAndroidTimezone")){
             skipTimezone = true;

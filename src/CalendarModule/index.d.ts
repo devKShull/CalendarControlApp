@@ -39,7 +39,9 @@ interface RecurrenceRule {
     /** Number of event occurrences */
     occurrence: number;
     /** The interval between events of this recurrence. */
-    interval: number;
+    /* interval: number;
+    weekPositionInMonth: number;
+    byDay: number[]; */
 }
 
 interface Attendee {

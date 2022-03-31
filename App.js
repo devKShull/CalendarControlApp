@@ -1,8 +1,8 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import eventSaveInterface from './src/custom_modules/eventSaveInterface';
-import homeInterface from './src/custom_modules/homeInterface';
+import eventSaveInterface from './src/Components/eventSaveInterface';
+import homeInterface from './src/Components/homeInterface';
 
 const Stack = createStackNavigator();
 

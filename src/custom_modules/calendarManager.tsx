@@ -1,26 +1,27 @@
-import RNCalendarEvents from '../CalendarModule';
+import RNCalendarEvents, { Calendar, CalendarEventReadable, CalendarOptions, ISODateString, RecurrenceRule } from '../CalendarModule';
 import moment from 'moment';
 import 'moment/locale/ko';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
+import { CalendarEventWritable } from './../CalendarModule/index.d';
 
 // 권한 체크 함수 authorized 가 아닐시 권한 요청
 export async function permissionCheck() {
     while (true) {
         console.log('check func On');
-        let res = await RNCalendarEvents.checkPermissions((readOnly = false)); //권한요청 readOnly 읽기전용
+        let res = await RNCalendarEvents.checkPermissions(false); //권한요청 readOnly 읽기전용
         console.log(res);
         if (res != 'authorized') {
             // 권한 재요청
-            await RNCalendarEvents.requestPermissions((readOnly = false));
+            await RNCalendarEvents.requestPermissions(false);
         } else {
             return res;
         } // res authorized denied restricted
     }
 }
 // 캘린더 생성 함수 params = {title, name}
-export async function calCreateFunc(params) {
-    let calInfO = {
+export async function calCreateFunc(params: { title: string, name: string }) {
+    let calInfO: CalendarOptions = {
         title: params.title,
         source: {
             name: 'calendar control sample App',
@@ -29,20 +30,16 @@ export async function calCreateFunc(params) {
         },
         name: params.name,
         color: '#D75F64',
-        isPrimary: 'false',
         accessLevel: 'editor',
-        allowedAvailabilities: ['busy', 'free'],
         ownerAccount: 'LOCAL',
         entityType: 'event',
     };
     const id = await RNCalendarEvents.saveCalendar(calInfO);
-    console.log(id);
-    console.log('id');
-
+    console.log('id: ' + id);
     return id;
 }
 // 캘린더 삭제 함수
-export async function calRemoveFunc(id) {
+export async function calRemoveFunc(id: string) {
     const res = await RNCalendarEvents.removeCalendar(id);
     return res; // bool true or false
 }
@@ -90,32 +87,40 @@ export async function calFetchFunc() {
     //     }]
     // }
 }
-export async function eventSaveFunc(eventTitle, eventData, exception = null) {
-    console.log('//////////////////////////');
-    console.log(eventData);
-    console.log(exception);
+
+export async function eventSaveFunc(eventTitle: string, eventData: CalendarEventWritable, exception: string | null = null) {
+
     let event = eventData;
-    event.startDate = moment(event.startDate).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
-    event.endDate = moment(event.endDate).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    event.startDate = moment(event.startDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
+    if (event.endDate) {
+        event.endDate = moment(event.endDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    }
+    console.log('//////////////////////////');
+    console.log(event);
+    console.log(exception);
     //테스트 결과 콘솔창엔 한국시간이 정상적으로 뜸 하지만 저장된 일정은 9시간이 더해진 시간이 저장됨
     //format 마지막에 Z문자를 삽입할 시 현재시간에 9시간이 더해진 시간으로 렌더링됨(콘솔엔 정상시간이 표시됨)
     let res;
-    if (exception == null) {
-        res = await RNCalendarEvents.saveEvent(eventTitle, event);
-    } else {
-        console.log('exception on');
-        res = await RNCalendarEvents.saveEvent(eventTitle, event, { exceptionDate: exception, futureEvents: false });
+    try {
+        if (exception == null) {
+            res = await RNCalendarEvents.saveEvent(eventTitle, event)
+        } else {
+            console.log('exception on');
+            res = await RNCalendarEvents.saveEvent(eventTitle, event, { exceptionDate: exception, futureEvents: false });
+        }
+        const te = await RNCalendarEvents.findEventById(res);
+        console.log(te);
+        console.log(res);
+        return res;
+    } catch (err) {
+        console.warn(err);
     }
-    const te = await RNCalendarEvents.findEventById(res);
-    console.log(te);
-    console.log(res);
-    return res;
 }
-export async function eventFindId(id) {
+export async function eventFindId(id: string) {
     const res = await RNCalendarEvents.findEventById(id);
     return res;
 }
-export async function eventFetchFunc(data) {
+export async function eventFetchFunc(data: { start: ISODateString, end: ISODateString, calId: string[] }) {
     // 입력 데이터 양식
     // data = {
     //     start : YYYY-MM-DDT00:00:00.000'Z'
@@ -123,7 +128,7 @@ export async function eventFetchFunc(data) {
     //     id: 'calendarId' 조회할 캘린더 id
     // }
     const res = await RNCalendarEvents.fetchAllEvents(data.start, data.end, data.calId);
-    let item = {}; //RN calendar에 표시하기위한 데이터 파싱
+    let item: any = {}; //RN calendar에 표시하기위한 데이터 파싱
     res.map((i) => {
         const date = moment(i.startDate).format('YYYY-MM-DD');
         const during = { start: i.startDate, end: i.endDate };
@@ -135,7 +140,7 @@ export async function eventFetchFunc(data) {
         }
     });
     // 아래는 Option 일정이 없는 날짜에 빈 배열 추가
-    let beforeDate = data.start;
+    let beforeDate = moment(data.start);
     while (true) {
         if (moment(beforeDate).isBefore(data.end)) {
             // fetch종료 날짜까지 빈데이터 탐색
@@ -152,13 +157,13 @@ export async function eventFetchFunc(data) {
     // Ex) item = {date:[{name:'타이틀', id: '이벤트 id', during: {start: '시작시간', end: '종료시간'}}, {..} ], ......}
 }
 
-export async function eventRemoveFunc(id) {
+export async function eventRemoveFunc(id: string) {
     //이벤트 삭제
     const res = await RNCalendarEvents.removeEvent(id, { futureEvents: true });
     return res; //삭제 결과
 }
 
-export async function eventSend(titleIn, dataIn, id) {
+/* export async function eventSend(titleIn:string, dataIn, id:string) {
     //이벤트 서버로 전송
     console.log('sendStart');
     const key = Math.floor(Math.random() * 109951162777600).toString(16);
@@ -169,16 +174,20 @@ export async function eventSend(titleIn, dataIn, id) {
         id: key,
         allDay: dataIn.allDay,
         startDate: moment(dataIn.startDate).add('09:00'), //이벤트 저장중에 9시간을 뺏기때문에 다시더함 서버에서 확인 필요
+        alarms: '',
+        description: "",
+        endDate: "",
+
     };
 
-    if (dataIn.alarms != null) {
+    if (dataIn.alarms != "") {
         //알림 데이터 삽입
         parseData = { ...parseData, alarms: dataIn.alarms };
     } else {
         parseData = { ...parseData, alarms: '' };
     }
 
-    if (dataIn.description != null) {
+    if (dataIn.description != "") {
         //설명 데이터 삽입
         parseData = { ...parseData, description: dataIn.description };
     } else {
@@ -202,7 +211,7 @@ export async function eventSend(titleIn, dataIn, id) {
             console.log(hour);
             parseData = { ...parseData, endDate: moment(parseData.startDate).add(hour, 'h').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z' };
         }
-        let recData;
+        let recData:RecurrenceRule;
         if (dataIn.recurrenceRule.frequency != null) {
             recData = { ...recData, frequency: dataIn.recurrenceRule.frequency };
         }
@@ -290,4 +299,4 @@ export async function eventSend(titleIn, dataIn, id) {
     //     }).catch(function (error) {
     //         console.log(error);
     //     })
-}
+} */

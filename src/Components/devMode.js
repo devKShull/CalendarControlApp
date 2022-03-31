@@ -13,8 +13,8 @@ export default devMode = () => {
         console.log(date);
         const data = {
             // calendarId: '15',       //저장될 캘린더 ID
-            startDate: moment(date).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간  -09:00 필요
-            endDate: moment(date).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //종료시간
+            startDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //시작시간
+            endDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z', //종료시간
             allDay: false,
             description: null,
             id: '15',
@@ -124,8 +124,8 @@ export default devMode = () => {
                 const title = i.title;
                 let saveData = {
                     calendarId: '8',
-                    startDate: moment(i.startDate).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
-                    endDate: moment(i.endDate).subtract('09:00').format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+                    startDate: moment(i.startDate).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
+                    endDate: moment(i.endDate).format('YYYY-MM-DDTHH:mm:ss.SSS') + 'Z',
                     description: i.description,
                     alarms: [],
                 };

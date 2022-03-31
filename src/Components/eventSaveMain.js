@@ -64,10 +64,10 @@ const eventSaveMain = ({ navigation, route }) => {
         endDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS'),
         allDay: false,
         description: null,
+        skipAndroidTimezone: true,
         alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
         recurrenceRule: {
             frequency: 'none',
-            duration: 'PT0H',
         },
     });
     let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
@@ -208,6 +208,7 @@ const eventSaveMain = ({ navigation, route }) => {
             setDate(currentDate);
             console.log('CurrentDate ' + currentDate);
             const forDate = moment(currentDate).format('YYYY-MM-DDTHH:mm:ss.SSS');
+
             if (mode === 'date' && !eventData.allDay) {
                 showMode('time');
                 //날짜 선택 완료시 시간선택모드로
@@ -290,7 +291,7 @@ const eventSaveMain = ({ navigation, route }) => {
                     console.log('//////////////////////////////////');
                     console.log(eventData);
                     const id = await calendarClass.eventSaveFunc(eventTitle, eventData); //이벤트 저장
-                    await calendarClass.eventSend(eventTitle, eventData, id); //이벤트 데이터 전송용 파싱 및 전송
+                    // await calendarClass.eventSend(eventTitle, eventData, id); //이벤트 데이터 전송용 파싱 및 전송
                     showToast(eventTitle + '일정이 저장되었습니다. id:' + id); //Toast알림 표시
                     setTimeout(() => {
                         navigation.navigate('Agenda Calendar');
@@ -342,7 +343,7 @@ const eventSaveMain = ({ navigation, route }) => {
     const initModal = () => {
         //recurrenceRule 데이터 초기화
         dispatch({ type: 'frequency', data: 'none' });
-        dispatch({ type: 'duration', data: 'PT0H' });
+        // dispatch({ type: 'duration', data: 'PT0H' });
         if (eventData.recurrenceRule.interval != null) {
             delete eventData.recurrenceRule.interval;
         }
