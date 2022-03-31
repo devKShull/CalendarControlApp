@@ -1,12 +1,15 @@
-import RNCalendarEvents, { Calendar, CalendarEventReadable, CalendarOptions, ISODateString, RecurrenceRule } from '../CalendarModule';
+import RNCalendarEvents, { AuthorizationStatus, Calendar, CalendarEventReadable, CalendarOptions, ISODateString, RecurrenceRule } from '../CalendarModule';
 import moment from 'moment';
 import 'moment/locale/ko';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
 import { CalendarEventWritable } from './../CalendarModule/index.d';
 
-// 권한 체크 함수 authorized 가 아닐시 권한 요청
-export async function permissionCheck() {
+/**
+ * 권한요청 (수락될때 까지)
+ * @returns 권한요청 결과
+ */
+export async function permissionCheck(): Promise<AuthorizationStatus> {
     while (true) {
         console.log('check func On');
         let res = await RNCalendarEvents.checkPermissions(false); //권한요청 readOnly 읽기전용
@@ -19,7 +22,12 @@ export async function permissionCheck() {
         } // res authorized denied restricted
     }
 }
-// 캘린더 생성 함수 params = {title, name}
+
+/**
+ * 캘린더 생성
+ * @param params 캘린더 이름, 타이틀(?)
+ * @returns 캘린더 id
+ */
 export async function calCreateFunc(params: { title: string, name: string }) {
     let calInfO: CalendarOptions = {
         title: params.title,
@@ -38,12 +46,21 @@ export async function calCreateFunc(params: { title: string, name: string }) {
     console.log('id: ' + id);
     return id;
 }
-// 캘린더 삭제 함수
+
+/**
+ * 캘린더 삭제
+ * @param id 삭제할 캘린더 id
+ * @returns 삭제결과
+ */
 export async function calRemoveFunc(id: string) {
     const res = await RNCalendarEvents.removeCalendar(id);
     return res; // bool true or false
 }
-// 캘린더 조회 함수
+
+/**
+ * 캘린더 리스트 조회 및 정렬
+ * @returns 정렬된 Calendar object
+ */
 export async function calFetchFunc() {
     const res = await RNCalendarEvents.findCalendars();
     console.log(res);
@@ -69,37 +86,21 @@ export async function calFetchFunc() {
     });
     const parsingRes = { google: googleCalData, local: localCalData, samsung: samCalData, others: otherCalendars, icloud: icloudCalData };
     return parsingRes;
-    // parsingRes = { 리턴 데이터
-    //     google: [{
-    //         "allowedAvailabilities": ["busy", "free"],
-    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
-    //         "source": "~~~@gmail.com", "title": "대한민국의 휴일", "type": "com.google"
-    //     }, ....],
-    //     local: [{
-    //         "allowedAvailabilities": ["busy", "free"],
-    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
-    //         "source": "~~~@gmail.com", "title": "", "type": "LOCAL"
-    //     }],
-    //     samsung: [{
-    //         "allowedAvailabilities": ["busy", "free"],
-    //         "allowsModifications": false, "color": "", "id": "", "isPrimary": false,
-    //         "source": "~~~@gmail.com", "title": "", "type": ""
-    //     }]
-    // }
 }
 
 export async function eventSaveFunc(eventTitle: string, eventData: CalendarEventWritable, exception: string | null = null) {
-
     let event = eventData;
     event.startDate = moment(event.startDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'); //이벤트 저장시 09시간 빼야함
     if (event.endDate) {
         event.endDate = moment(event.endDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     }
+    if (event.recurrenceRule?.endDate) {
+        event.recurrenceRule.endDate = moment(event.recurrenceRule.endDate).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    }
     console.log('//////////////////////////');
     console.log(event);
     console.log(exception);
-    //테스트 결과 콘솔창엔 한국시간이 정상적으로 뜸 하지만 저장된 일정은 9시간이 더해진 시간이 저장됨
-    //format 마지막에 Z문자를 삽입할 시 현재시간에 9시간이 더해진 시간으로 렌더링됨(콘솔엔 정상시간이 표시됨)
+
     let res;
     try {
         if (exception == null) {
@@ -116,17 +117,13 @@ export async function eventSaveFunc(eventTitle: string, eventData: CalendarEvent
         console.warn(err);
     }
 }
+
 export async function eventFindId(id: string) {
     const res = await RNCalendarEvents.findEventById(id);
     return res;
 }
+
 export async function eventFetchFunc(data: { start: ISODateString, end: ISODateString, calId: string[] }) {
-    // 입력 데이터 양식
-    // data = {
-    //     start : YYYY-MM-DDT00:00:00.000'Z'
-    //     end : YYYY-MM-DDT00:00:00.000'Z'
-    //     id: 'calendarId' 조회할 캘린더 id
-    // }
     const res = await RNCalendarEvents.fetchAllEvents(data.start, data.end, data.calId);
     let item: any = {}; //RN calendar에 표시하기위한 데이터 파싱
     res.map((i) => {

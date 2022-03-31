@@ -31,6 +31,7 @@ interface Alarm<D = ISODateString | number> {
     structuredLocation?: AlarmStructuredLocation;
 }
 
+type daysString = 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA' | 'SU';
 interface RecurrenceRule {
     /** Event recurring frequency. */
     frequency: RecurrenceFrequency;
@@ -39,9 +40,11 @@ interface RecurrenceRule {
     /** Number of event occurrences */
     occurrence: number;
     /** The interval between events of this recurrence. */
-    /* interval: number;
+    interval: number;
+
     weekPositionInMonth: number;
-    byDay: number[]; */
+    daysOfWeek: daysString[];
+    monthPositionInYear: number;
 }
 
 interface Attendee {

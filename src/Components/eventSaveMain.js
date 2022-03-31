@@ -72,8 +72,11 @@ const eventSaveMain = ({ navigation, route }) => {
     });
     let calId = { id: null, title: null }; //캘린더 선택후 받아온 데이터 저장용
     let alarmData = []; //알람데이터 저장용
+    const [radioInitIndex, setRadioIndex] = useState(0);
     const [mode, setMode] = useState('date'); //dateTimePicker 의 모드 선택용
     const [show, setShow] = useState(false); // show 가 true 일때만 dateTimePicker 표시
+    const [recMode, setrecM] = useState('date');
+    const [recDPickerShow, setRecPicker] = useState(false);
     const [isStart, setIsStart] = useState(false); //true = 시작시간 or false = 종료시간
     const [eventTitle, setTitle] = useState(); // 이벤트의 title은 eventData와 별개로 지정되기 때문에 따로 state 로 지정
     const [initDate, setInitDate] = useState(false); // datetimePicker 초기화 false 인경우 시작, 종료시간 동시에 설정
@@ -246,7 +249,29 @@ const eventSaveMain = ({ navigation, route }) => {
             setShow(false);
         }
     };
-
+    const onChangeRecPicker = (event, selectedDate) => {
+        //날짜선택시
+        if (selectedDate != null) {
+            const currentDate = selectedDate || date;
+            //선택된 날짜가 없을시 date(현재시간) 가 들어감
+            setRecPicker(Platform.OS === 'ios');
+            setDate(currentDate);
+            console.log('CurrentDate ' + currentDate);
+            const forDate = moment(currentDate).format('YYYY-MM-DDTHH:mm:ss.SSS');
+            if (recMode === 'date') {
+                setrecM('time');
+                setRecPicker(true);
+                //날짜 선택 완료시 시간선택모드로
+            } else {
+                setrecM('date');
+                dispatch({ type: 'recurrenceEndDate', data: forDate });
+                console.info('반복종료시간 설정' + forDate);
+            }
+        } else {
+            //선택된 데이터가 없을시 dateTimePicker 종료
+            setRecPicker(false);
+        }
+    };
     const showMode = (currentMode) => {
         setMode(currentMode);
         setShow(true);
@@ -349,6 +374,21 @@ const eventSaveMain = ({ navigation, route }) => {
         }
         if (eventData.recurrenceRule.occurrence != null) {
             delete eventData.recurrenceRule.occurrence;
+        }
+    };
+    const radioInit = (val) => {
+        console.log(val);
+        switch (val) {
+            case 'none':
+                return 0;
+            case 'daily':
+                return 1;
+            case 'weekly':
+                return 2;
+            case 'monthly':
+                return 3;
+            case 'yearly':
+                return 4;
         }
     };
     return (
@@ -460,6 +500,7 @@ const eventSaveMain = ({ navigation, route }) => {
                 <Modal isVisible={recurModalVisible}>
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
                         <RadioForm
+                            initial={radioInitIndex}
                             radio_props={[
                                 { label: '반복없음', value: 'none' },
                                 { label: '매일반복', value: 'daily' },
@@ -469,6 +510,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             ]}
                             onPress={(val) => {
                                 dispatch({ type: 'frequency', data: val });
+                                setRadioIndex(radioInit(val));
                                 console.log(eventData);
                             }}
                         />
@@ -476,6 +518,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text>반복횟수 </Text>
                                 <TextInput
+                                    value={eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => dispatch({ type: 'occurrence', data: parseInt(txt) })}
@@ -484,6 +527,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TextInput
+                                    value={eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => dispatch({ type: 'interval', data: parseInt(txt) })}
@@ -493,7 +537,22 @@ const eventSaveMain = ({ navigation, route }) => {
                             <weekContext.Provider value={{ weeks, setWeeks }}>
                                 <WeekPicker />
                             </weekContext.Provider>
-                            <Text>반복종료날짜 설정</Text>
+                            <Button onPress={() => setRecPicker(true)} title="반복종료날짜 선택"></Button>
+                            {eventData.recurrenceRule.endDate && (
+                                <View>
+                                    <Text>{moment(eventData.recurrenceRule.endDate).format('YYYY년 MM월 DD일 HH시 mm분')}</Text>
+                                </View>
+                            )}
+                            {recDPickerShow && (
+                                <DateTimePicker
+                                    testID="dateTimePicker2"
+                                    value={date}
+                                    mode={recMode}
+                                    is24Hour={true}
+                                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                                    onChange={onChangeRecPicker}
+                                />
+                            )}
                             {/* 미완성 */}
                         </View>
                         <View style={{ flexDirection: 'row' }}>

@@ -1,5 +1,5 @@
 import CheckBox from '@react-native-community/checkbox';
-import React, { useState, useReducer, useContext } from 'react';
+import React, { useState, useReducer, useContext, useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { weekContext } from './eventSaveMain';
 
@@ -35,7 +35,24 @@ const weekPicker = () => {
         sa: false,
         su: false,
     });
-
+    const getIndex = (val) => {
+        switch (val) {
+            case 'MO':
+                return 0;
+            case 'TU':
+                return 1;
+            case 'WE':
+                return 2;
+            case 'TH':
+                return 3;
+            case 'FR':
+                return 4;
+            case 'SA':
+                return 5;
+            case 'SU':
+                return 6;
+        }
+    };
     const set = (val, when) => {
         if (val) {
             setWeeks([...weeks, when]); //알림 추가
@@ -43,6 +60,7 @@ const weekPicker = () => {
             setWeeks(weeks.filter((i) => i.date != when)); //알림 삭제
         }
     };
+
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <CheckBox
