@@ -580,7 +580,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                         endDate = format.format(calendar.getTime());
                     }
                 }
-
+                /**
+                 * @author KSHUll
+                 * */
                 if (recurrenceRule.hasKey("daysOfWeek")) {
                     daysOfWeek = recurrenceRule.getArray("daysOfWeek");
                 }
@@ -1121,6 +1123,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                             e.printStackTrace();
                             break;
                         }
+                        /**
+                         * @author KSHULL
+                         * */
                     case "BYSETPOS":
                         recurrenceRule.putInt("weekPositionInMonth", Integer.parseInt(recurrenceRules[idx].split("=")[1]));
                         break;
