@@ -77,7 +77,7 @@ interface Calendar {
 
 interface CalendarEventBase {
     /** The start date of the calendar event in ISO format */
-    startDate: ISODateString;
+    startDate?: ISODateString;
     /** The end date of the calendar event in ISO format. */
     endDate?: ISODateString;
     /** Unique id for the calendar where the event will be saved. Defaults to the device's default  calendar. */
@@ -122,6 +122,8 @@ export interface CalendarEventWritable extends CalendarEventBase {
     recurrenceRule?: RecurrenceRule;
     /** The alarms associated with the calendar event, as an array of alarm objects. */
     alarms?: Array<Alarm<ISODateString | number>>;
+
+    skipAndroidTimezone?: boolean;
 }
 
 export interface CalendarOptions {
