@@ -5,7 +5,6 @@ import eventSaveInterface from './src/Components/eventSaveInterface';
 import homeInterface from './src/Components/homeInterface';
 import { Provider } from 'react-redux';
 import { store } from './src/reducers/store';
-import { testStore } from './src/reducers/testStore';
 const Stack = createStackNavigator();
 
 const App = () => {
