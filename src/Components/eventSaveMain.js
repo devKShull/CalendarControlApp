@@ -19,61 +19,61 @@ export const weekContext = React.createContext();
 const eventSaveMain = ({ navigation, route }) => {
     const [date, setDate] = useState(new Date()); //현재 시각
 
-    // const eventReducer = (state, action) => {
-    //     //eventData 지정을 위한 리듀서
-    //     switch (action.type) {
-    //         case 'calendarId': //일정을 저장할 캘린더 ID
-    //             return { ...state, calendarId: action.data };
-    //         case 'startDate': //일정 시작시간
-    //             return { ...state, startDate: action.data };
-    //         case 'endDate': //일정 종료시간
-    //             return { ...state, endDate: action.data };
-    //         case 'allDay': //일정이 하루종일인가?
-    //             return { ...state, allDay: action.data };
-    //         case 'description': //일정 설명
-    //             return { ...state, description: action.data };
-    //         case 'recurrence': //일정 반복 == recurrenceRule 의 frequency와 같음
-    //             return { ...state, recurrence: action.data };
-    //         case 'alarms': //일정 알림
-    //             return { ...state, alarms: action.data };
-    //         case 'all': //일정 전체 데이터 설정
-    //             return action.data;
-    //         case 'date': //일정 시작,종료시간 동시설정
-    //             return { ...state, startDate: action.data, endDate: action.data };
-    //         //아래는 recurrenceRule
-    //         case 'duration': //안드로이드의 endDate를 대신함 일정지속시간
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, duration: action.data } };
-    //         case 'frequency': //반복 종류 weekly daily monthly등
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, frequency: action.data } };
-    //         case 'interval': //반복 간격
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, interval: action.data } };
-    //         case 'occurrence': //반복 횟수
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, occurrence: action.data } };
-    //         case 'recurrenceEndDate': //반복 종료 날짜
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, endDate: action.data } };
-    //         case 'daysOfWeek':
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, daysOfWeek: action.data } };
-    //         //frequency 가 weekly 일때 월간반복중 요일 선택 ["MO","TU"] => 매주 월요일 화요일
-    //         //frequency 가 monthly 일때 weekPositionInMonth와 함께 사용가능 ["3TU"] => 매달 3번째 화요일
-    //         case 'weekPositionInMonth': //frequency가 monthly 일경우 월간 반복 중 몇번째 주?
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, weekPositionInMonth: action.data } };
-    //         case 'monthPositionInMonth': //frequency가 yearly 일경우 년간 반복 중 몇번째 달?
-    //             return { ...state, recurrenceRule: { ...state.recurrenceRule, monthPositionInMonth: action.data } };
-    //         default:
-    //             break;
-    //     }
-    // };
-    // const [eventData, dispatch] = useReducer(eventReducer, {
-    //     startDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS'),
-    //     endDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS'),
-    //     allDay: false,
-    //     description: null,
-    //     skipAndroidTimezone: true,
-    //     alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
-    //     recurrenceRule: {
-    //         frequency: 'none',
-    //     },
-    // });
+    /* const eventReducer = (state, action) => {
+        //eventData 지정을 위한 리듀서
+        switch (action.type) {
+            case 'calendarId': //일정을 저장할 캘린더 ID
+                return { ...state, calendarId: action.data };
+            case 'startDate': //일정 시작시간
+                return { ...state, startDate: action.data };
+            case 'endDate': //일정 종료시간
+                return { ...state, endDate: action.data };
+            case 'allDay': //일정이 하루종일인가?
+                return { ...state, allDay: action.data };
+            case 'description': //일정 설명
+                return { ...state, description: action.data };
+            case 'recurrence': //일정 반복 == recurrenceRule 의 frequency와 같음
+                return { ...state, recurrence: action.data };
+            case 'alarms': //일정 알림
+                return { ...state, alarms: action.data };
+            case 'all': //일정 전체 데이터 설정
+                return action.data;
+            case 'date': //일정 시작,종료시간 동시설정
+                return { ...state, startDate: action.data, endDate: action.data };
+            //아래는 recurrenceRule
+            case 'duration': //안드로이드의 endDate를 대신함 일정지속시간
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, duration: action.data } };
+            case 'frequency': //반복 종류 weekly daily monthly등
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, frequency: action.data } };
+            case 'interval': //반복 간격
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, interval: action.data } };
+            case 'occurrence': //반복 횟수
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, occurrence: action.data } };
+            case 'recurrenceEndDate': //반복 종료 날짜
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, endDate: action.data } };
+            case 'daysOfWeek':
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, daysOfWeek: action.data } };
+            //frequency 가 weekly 일때 월간반복중 요일 선택 ["MO","TU"] => 매주 월요일 화요일
+            //frequency 가 monthly 일때 weekPositionInMonth와 함께 사용가능 ["3TU"] => 매달 3번째 화요일
+            case 'weekPositionInMonth': //frequency가 monthly 일경우 월간 반복 중 몇번째 주?
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, weekPositionInMonth: action.data } };
+            case 'monthPositionInMonth': //frequency가 yearly 일경우 년간 반복 중 몇번째 달?
+                return { ...state, recurrenceRule: { ...state.recurrenceRule, monthPositionInMonth: action.data } };
+            default:
+                break;
+        }
+    };
+    const [eventData, dispatch] = useReducer(eventReducer, {
+        startDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        endDate: moment(date).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        allDay: false,
+        description: null,
+        skipAndroidTimezone: true,
+        alarms: [], //  분단위로 자동 조절 ex 10 => startDate로 부터 10분전
+        recurrenceRule: {
+            frequency: 'none',
+        },
+    }); */
 
     const eventData = useSelector((state) => {
         return state.event;
@@ -136,6 +136,7 @@ const eventSaveMain = ({ navigation, route }) => {
                         console.log(duration);
                         if (!(res.recurrenceRule.frequency == null || res.recurrenceRule.frequency == 'none')) {
                             setIsException(true);
+                            setRadioIndex(radioInit(res.recurrenceRule.frequency));
                         } //exception 날짜를 지정하기위함
                         if (duration == 'P1D') {
                             //duration으로 endDate생성
@@ -174,16 +175,11 @@ const eventSaveMain = ({ navigation, route }) => {
 
     useEffect(async () => {
         init();
-        return () => {
-            console.log('unMount eventSaveMain');
-            dispatch({ type: ActionTypeConst.CLEAR_EVENT });
-            dispatch({ type: ActionTypeConst.CLEAR_WEEk });
-        };
     }, [route.params]);
 
     const alarmSet = (alarmDataParam) => {
         //알림 데이터및 렌더 설정
-        dispatch({ type: 'alarms', data: alarmDataParam });
+        dispatch({ type: ActionTypeConst.ALARMS, data: alarmDataParam });
         setAlarmShow(
             //설정된 알림 표시하는 렌더
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -343,6 +339,9 @@ const eventSaveMain = ({ navigation, route }) => {
             }
         }
     };
+    /**
+     * 현재 native 쪽에서 작동하지않음
+     */
     const saveInModal = async (isExcept) => {
         if (isExcept) {
             //예외 일정 수정 해당 기능 현재 작동하지않음
@@ -461,7 +460,7 @@ const eventSaveMain = ({ navigation, route }) => {
                 </View>
 
                 <TextInput
-                    value={eventData.description}
+                    value={eventData.description | ''}
                     placeholder={'메모'}
                     style={{ color: '#000000', fontSize: 20, backgroundColor: '#f7f7f7' }}
                     onChangeText={(txt) => (eventData.description = txt)}
@@ -535,7 +534,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text>반복횟수 </Text>
                                 <TextInput
-                                    // value={eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
+                                    value={eventData.recurrenceRule && eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {
@@ -550,7 +549,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TextInput
-                                    // value={eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
+                                    value={eventData.recurrenceRule && eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {

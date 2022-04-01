@@ -6,11 +6,12 @@ import * as calendarClass from '../custom_modules/calendarManager';
 import { useFocusEffect } from '@react-navigation/native';
 import { Agenda } from 'react-native-calendars';
 import { Icon, Fab, Header, Left, Right, Body, H1, H2, Row } from 'native-base';
-
+import { useDispatch } from 'react-redux';
+import { CLEAR_EVENT, CLEAR_WEEk } from '../reducers/ActionTypeConst';
 export default calAgendaInterface = ({ navigation }) => {
     const [items, setItems] = useState({});
     const [changedDate, setChangedDate] = useState(new Date());
-
+    const dispatch = useDispatch();
     const check = async () => {
         //권한 체크
         const res = await calendarClass.permissionCheck(); // authorized => 허용, restricted, denied => 거부
@@ -28,12 +29,17 @@ export default calAgendaInterface = ({ navigation }) => {
         const res = await calendarClass.eventFetchFunc(fetchDate);
         setItems({ ...items, ...res });
     };
-
+    const resetEventData = () => {
+        console.log('event data 리셋');
+        dispatch({ type: CLEAR_EVENT });
+        dispatch({ type: CLEAR_WEEk });
+    };
     useFocusEffect(
         useCallback(
             //포커스가 돌아왔을때 다시로딩
             () => {
                 check();
+                resetEventData();
             },
             []
         )
