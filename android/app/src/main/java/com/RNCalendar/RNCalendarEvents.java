@@ -462,7 +462,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
                 CalendarContract.Instances.HAS_ALARM,
                 CalendarContract.Instances.ORIGINAL_ID,
                 CalendarContract.Instances.EVENT_ID,
-                CalendarContract.Instances.DURATION
+                CalendarContract.Instances.DURATION,
+                CalendarContract.Instances.EXDATE,
+                CalendarContract.Instances.EXRULE
         }, selection, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
@@ -1183,8 +1185,9 @@ public class RNCalendarEvents extends ReactContextBaseJavaModule implements Perm
             
             
         }
-        event.putString("exRULE", cursor.getString(12));
-        event.putString("exDATE", cursor.getString(13));
+
+//        event.putString("exRULE", cursor.getString(15));
+//        event.putString("exDATE", cursor.getString(14));
         event.putString("id", cursor.getString(0));
         event.putMap("calendar", findCalendarById(cursor.getString(cursor.getColumnIndex("calendar_id"))));
         event.putString("title", cursor.getString(cursor.getColumnIndex("title")));

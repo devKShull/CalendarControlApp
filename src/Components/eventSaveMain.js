@@ -89,7 +89,7 @@ const eventSaveMain = ({ navigation, route }) => {
     const [recMode, setrecM] = useState('date');
     const [recDPickerShow, setRecPicker] = useState(false);
     const [isStart, setIsStart] = useState(false); //true = 시작시간 or false = 종료시간
-    const [eventTitle, setTitle] = useState(); // 이벤트의 title은 eventData와 별개로 지정되기 때문에 따로 state 로 지정
+    const [eventTitle, setTitle] = useState(''); // 이벤트의 title은 eventData와 별개로 지정되기 때문에 따로 state 로 지정
     const [initDate, setInitDate] = useState(false); // datetimePicker 초기화 false 인경우 시작, 종료시간 동시에 설정
     const [alarmShow, setAlarmShow] = useState(); // 선택한 알림을 표기하기위한 component state
     const [calNameShow, setCalNameShow] = useState(); // 선택한 캘린더의 title 을 표시하기우한 component state
@@ -98,7 +98,7 @@ const eventSaveMain = ({ navigation, route }) => {
     const [isModalVisible, setModalVisible] = useState(false); //반복일정 수정시 예외삭제 모달 표시용
     const [recurModalVisible, setRecurModal] = useState(false); //반복 설정 모달 표시용
     const [weeks, setWeeks] = useState([]); //weekpicker 로 부터 week가져오기위함
-
+    const [description, setDescription] = useState('');
     const init = async () => {
         //데이터 초기화 이미있는일정 선택시
         if (route.params != null) {
@@ -127,6 +127,7 @@ const eventSaveMain = ({ navigation, route }) => {
                 delete res.calendar; // 이벤트 저장시 캘린더에 대한 내용은 calendarId만 있으면됨
                 delete res.recurrence; // recurrence 설정은 recurrenceRule 로 대체한다 10/01
                 dispatch({ type: ActionTypeConst.ALL_EVENT_DATA, data: res });
+                setDescription(res.description);
                 //recurrenceRule 데이터에서 endDate 추출 09/23
                 if (res.recurrenceRule != null) {
                     //recurrenceRule 존재여부 먼저 확인 안할시 duration undefined 오류
@@ -460,10 +461,13 @@ const eventSaveMain = ({ navigation, route }) => {
                 </View>
 
                 <TextInput
-                    value={eventData.description | ''}
+                    value={description}
                     placeholder={'메모'}
                     style={{ color: '#000000', fontSize: 20, backgroundColor: '#f7f7f7' }}
-                    onChangeText={(txt) => (eventData.description = txt)}
+                    onChangeText={(txt) => {
+                        dispatch({ type: ActionTypeConst.DESCRIPTION, data: txt });
+                        setDescription(txt);
+                    }}
                 />
                 <TouchableOpacity onPress={() => navigation.navigate('Select Calendar')} style={{ height: 50 }}>
                     <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
@@ -534,7 +538,9 @@ const eventSaveMain = ({ navigation, route }) => {
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text>반복횟수 </Text>
                                 <TextInput
-                                    value={eventData.recurrenceRule && eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString()}
+                                    value={
+                                        eventData.recurrenceRule && eventData.recurrenceRule.occurrence && eventData.recurrenceRule.occurrence.toString() | ''
+                                    }
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {
@@ -549,7 +555,7 @@ const eventSaveMain = ({ navigation, route }) => {
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <TextInput
-                                    value={eventData.recurrenceRule && eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString()}
+                                    value={eventData.recurrenceRule && eventData.recurrenceRule.interval && eventData.recurrenceRule.interval.toString() | ''}
                                     style={{ backgroundColor: '#d9d9d9' }}
                                     keyboardType="numeric"
                                     onChangeText={(txt) => {
