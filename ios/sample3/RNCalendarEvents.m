@@ -28,10 +28,10 @@ static NSString *const _timeZone    = @"timeZone";
 dispatch_queue_t serialQueue;
 
 @implementation RNCalendarEvents
-
+	
 - (NSError *)exceptionToError:(NSException *)exception {
     NSMutableDictionary * info = [NSMutableDictionary dictionary];
-    [info setValue:exception.name forKey:@"ExceptionName"];
+  [info setValue:exception.name forKey:@"ExceptionName"];
     [info setValue:exception.reason forKey:@"ExceptionReason"];
     [info setValue:exception.callStackReturnAddresses forKey:@"ExceptionCallStackReturnAddresses"];
     [info setValue:exception.callStackSymbols forKey:@"ExceptionCallStackSymbols"];
@@ -708,10 +708,32 @@ RCT_EXPORT_MODULE()
             if ([rule daysOfTheWeek]) {
                 NSMutableArray *days = [[NSMutableArray alloc] init];
                 for (EKRecurrenceDayOfWeek *day in [rule daysOfTheWeek]) {
-                    NSMutableDictionary *formattedDay = [[NSMutableDictionary alloc] init];
-                    
-                
-                    [days addObject:formattedDay];
+                  switch(day.dayOfTheWeek){
+                    case 1:
+                      [days addObject:@"SU"];
+                      break;
+                    case 2:
+                      [days addObject:@"MO"];
+                      break;
+                    case 3:
+                      [days addObject:@"TU"];
+                      break;
+                    case 4:
+                      [days addObject:@"WE"];
+                      break;
+                    case 5:
+                      [days addObject:@"TH"];
+                      break;
+                    case 6:
+                      [days addObject:@"FR"];
+                      break;
+                    case 7:
+                      [days addObject:@"SA"];
+                      break;
+                  }
+//                  [days addObject:[NSNumber numberWithInteger:day.dayOfTheWeek]];
+//                    NSMutableDictionary *formattedDay = [[NSMutableDictionary alloc] init];
+//                    [days addObject:formattedDay];
 
                 }
                 [recurrenceRule setValue:days forKey:@"daysOfWeek"];
